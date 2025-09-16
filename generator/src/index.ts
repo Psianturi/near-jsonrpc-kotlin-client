@@ -113,17 +113,56 @@ async function generateClient(spec: OpenAPIObject) {
     await fs.emptyDir(OUTPUT_DIR_CLIENT);
     console.log(`Cleaned ${OUTPUT_DIR_CLIENT}`);
 
+    // First, generate the base classes needed for all RPC calls
+    const baseRpcContent = `package com.near.jsonrpc.client
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.json.JsonElement
+
+@Serializable
+internal data class JsonRpcRequest<T>(
+    val jsonrpc: String = "2.0",
+    val id: String = "dontcare",
+    val method: String,
+    val params: T
+)
+
+@Serializable
+internal data class JsonRpcResponse<T>(
+    val jsonrpc: String,
+    val id: String,
+    val result: T? = null,
+    val error: JsonRpcError? = null
+)
+
+@Serializable
+data class JsonRpcError(
+    val code: Int,
+    val message: String,
+    val data: JsonElement? = null,
+    @SerialName("name")
+    val errorType: String? = null,
+)
+
+class NearRpcException(message: String, val error: JsonRpcError) : RuntimeException(message)
+
+`
+    const baseRpcFilePath = path.join(OUTPUT_DIR_CLIENT, `JsonRpc.kt`);
+    await fs.writeFile(baseRpcFilePath, baseRpcContent);
+    console.log(`Generated ${baseRpcFilePath}`);
+
+
     let clientClassContent = `package com.near.jsonrpc.client
 
 import com.near.jsonrpc.types.*
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonElement
 
 /**
  * A Kotlin Multiplatform JSON-RPC client for the NEAR Protocol.
@@ -131,13 +170,30 @@ import kotlinx.serialization.json.put
  * @property client The Ktor HttpClient used for making requests.
  * @property rpcUrl The URL of the NEAR JSON-RPC endpoint.
  */
-class NearRpcClient(private val client: HttpClient, private val rpcUrl: String = "https://rpc.mainnet.near.org") {
+class NearRpcClient(private val rpcUrl: String, private val client: HttpClient) {
 
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
+        classDiscriminator = "request_type" // Important for handling param polymorphism
     }
 
+    private suspend inline fun <reified T, reified R> call(method: String, params: T): R {
+        val request = JsonRpcRequest(method = method, params = params)
+        
+        val httpResponse: HttpResponse = client.post(rpcUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }
+
+        val response = httpResponse.body<JsonRpcResponse<R>>()
+
+        if (response.error != null) {
+            throw NearRpcException("RPC Error: \${response.error.message} (Code: \${response.error.code})", response.error)
+        }
+        
+        return response.result!!
+    }
 `;
 
     const paths = spec.paths;
@@ -148,61 +204,58 @@ class NearRpcClient(private val client: HttpClient, private val rpcUrl: String =
         }
 
         const operation = pathItem.post;
- 
-        const rpcMethodName = operation.summary ?? operation.operationId;
+        const rpcMethodName = operation.operationId; // Use operationId as the canonical method name
 
         if (!rpcMethodName) {
-            console.warn(`Skipping client method for path ${path} due to missing summary/rpcMethodName.`);
+            console.warn(`Skipping path ${path} because it has no operationId.`);
             continue;
         }
 
-        
-        // Determine return type from response
-        if (!operation.responses || !operation.responses["200"]) {
-             console.warn(`Skipping client method ${rpcMethodName} due to missing '200' response definition.`);
-             continue;
-        }
-        const responseSchema = operation.responses["200"].content?.["application/json"]?.schema as SchemaObject;
-        if (!responseSchema?.properties?.result) {
-            console.warn(`Skipping client method ${rpcMethodName} due to missing result schema.`);
-            continue;
-        }
-        const resultSchema = responseSchema.properties.result as SchemaObject;
-        const returnType = getKotlinType(resultSchema, spec);
         const functionName = toCamelCase(rpcMethodName);
 
-        if (operation.requestBody && "content" in operation.requestBody) {
-            const requestBodySchema = operation.requestBody.content?.["application/json"]?.schema as SchemaObject;
-            const requestParams = requestBodySchema?.properties?.params;
+        // --- Determine Parameter Type ---
+        let paramsKotlinType: string | null = null;
+        let paramsSignature = "";
+        let paramsVariable = "kotlinx.serialization.json.buildJsonObject {}"; // Default to empty JSON object
 
-            if (requestParams && Object.keys(requestParams).length > 0) {
-                console.log(`Skipping method ${rpcMethodName} for now due to parameters.`);
-                continue;
+        if (operation.requestBody && "content" in operation.requestBody) {
+            const requestSchema = operation.requestBody.content["application/json"].schema as SchemaObject;
+            if (requestSchema && "$ref" in requestSchema && requestSchema.$ref) {
+                const requestRefName = requestSchema.$ref.split("/").pop()!;
+                const fullRequestSchema = spec.components?.schemas?.[requestRefName] as SchemaObject;
+                const paramsSchema = fullRequestSchema?.properties?.params as (SchemaObject | ReferenceObject);
+                if (paramsSchema) {
+                    paramsKotlinType = getKotlinType(paramsSchema, spec);
+                    // Only add parameter if a valid type was found
+                    if (paramsKotlinType && paramsKotlinType !== "Any") {
+                        paramsSignature = `params: ${paramsKotlinType}`;
+                        paramsVariable = "params";
+                    }
+                }
             }
         }
-        
-        clientClassContent += `
-    /**
-     * Corresponds to the \`${rpcMethodName}\` RPC method.
-     * ${operation.description ? `\n     * ${operation.description}`: ''}
-     */
-    suspend fun ${functionName}(): ${returnType} {
-        val requestBody = buildJsonObject {
-            put("jsonrpc", "2.0")
-            put("id", "dontcare")
-            put("method", "${rpcMethodName}")
-            put("params", buildJsonObject {})
+
+        // --- Determine Return Type (Type-Safe) ---
+        let returnType = "JsonElement"; // Default fallback
+        const responseHolderSchema = operation.responses?.["200"]?.content?.["application/json"].schema as SchemaObject;
+
+        if (responseHolderSchema && "$ref" in responseHolderSchema && responseHolderSchema.$ref) {
+            const responseRefName = responseHolderSchema.$ref.split("/").pop()!;
+            const fullResponseSchema = spec.components?.schemas?.[responseRefName] as SchemaObject;
+            if (fullResponseSchema?.properties?.result) {
+                const resultSchema = fullResponseSchema.properties.result as (SchemaObject | ReferenceObject);
+                returnType = getKotlinType(resultSchema, spec);
+            }
         }
 
-        val response: JsonObject = client.post(rpcUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(requestBody)
-        }.body()
-
-        // Assuming successful response for now, error handling to be added.
-        return json.decodeFromJsonElement(response["result"]!!)
+        clientClassContent += `
+    /**
+     * ${operation.description?.trim().replace(/\n/g, '\n     * ')}
+     */
+    suspend fun ${functionName}(${paramsSignature}): ${returnType} {
+        return call<${paramsKotlinType ?? "kotlinx.serialization.json.JsonObject"}, ${returnType}>("${rpcMethodName}", ${paramsVariable})
     }
-`
+`;
     }
 
     clientClassContent += `}\n`;
