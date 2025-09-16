@@ -68,3 +68,8 @@ This will delete and re-create the contents of `packages/types/src` and `package
     - **On Linux/macOS:**
       ```bash
       ./gradlew build
+      ```
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
