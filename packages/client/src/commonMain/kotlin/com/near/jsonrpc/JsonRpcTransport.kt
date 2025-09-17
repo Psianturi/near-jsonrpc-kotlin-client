@@ -17,9 +17,9 @@ import kotlinx.coroutines.*
  *   val result: SomeResult = transport.call<SomeParams?, SomeResult>("method_name", params)
  */
 class JsonRpcTransport(
-    private val client: HttpClient,
+    val client: HttpClient,
     val rpcUrl: String,
-    private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) {
 
     /**
