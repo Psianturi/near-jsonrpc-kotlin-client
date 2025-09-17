@@ -5,12 +5,13 @@ A Kotlin Multiplatform client for the NEAR JSON-RPC API. This project is auto-ge
 
 ## Project Status
 
-**The code generator is now fully functional.** It correctly produces a type-safe Kotlin client for all RPC methods defined in the OpenAPI specification.
+**The code generator is now fully functional with JsonRpcTransport integration.** It correctly produces a type-safe Kotlin client for all RPC methods defined in the OpenAPI specification.
 
 **Completed Milestones:**
 - ✅ **Project Setup:** Configured a multi-module Gradle project recognized by Android Studio/IntelliJ IDEA.
 - ✅ **Type Generation (`types` module):** The generator successfully creates serializable Kotlin `data class` models for all RPC schemas.
 - ✅ **Client Generation (`client` module):** The generator now creates a complete, type-safe `NearRpcClient` with functions for all RPC methods, correctly handling those with and without parameters.
+- ✅ **JsonRpcTransport Integration:** Added `JsonRpcTransport` class for proper JSON-RPC envelope handling with snake_case method names.
 - ✅ **Buildable & Verified:** The entire project, including the generated `types` and `client` modules, is fully buildable.
 - ✅ **Housekeeping:** The project includes a comprehensive `.gitignore` and an Apache-2.0 `LICENSE`.
 
@@ -30,6 +31,7 @@ Here is a basic example of how to use the generated client in your Kotlin projec
 
     ```kotlin
     import com.near.jsonrpc.client.NearRpcClient
+    import com.near.jsonrpc.JsonRpcTransport
     import com.near.jsonrpc.types.BlockReference
     import com.near.jsonrpc.types.Finality
     import io.ktor.client.*
@@ -50,14 +52,17 @@ Here is a basic example of how to use the generated client in your Kotlin projec
             }
         }
 
-        // 2. Instantiate the NearRpcClient
-        val nearClient = NearRpcClient(
-            rpcUrl = "https://rpc.mainnet.near.org",
-            client = ktorClient
+        // 2. Create JsonRpcTransport instance
+        val transport = JsonRpcTransport(
+            client = ktorClient,
+            rpcUrl = "https://rpc.mainnet.near.org"
         )
 
+        // 3. Instantiate the NearRpcClient with transport
+        val nearClient = NearRpcClient(transport)
+
         try {
-            // 3. Call an RPC method without parameters
+            // 4. Call an RPC method without parameters
             println("Fetching network status...")
             val status = nearClient.status()
             println("Chain ID: \${status.chainId}")
@@ -65,7 +70,7 @@ Here is a basic example of how to use the generated client in your Kotlin projec
 
             println("\\n--------------------\\n")
 
-            // 4. Call an RPC method with parameters
+            // 5. Call an RPC method with parameters
             println("Fetching latest block...")
             val blockRequest = BlockReference(finality = Finality.FINAL)
             val block = nearClient.block(params = blockRequest)
@@ -76,11 +81,28 @@ Here is a basic example of how to use the generated client in your Kotlin projec
             println("An error occurred: \${e.message}")
             e.printStackTrace()
         } finally {
-            // 5. Close the client
+            // 6. Close the client
             ktorClient.close()
         }
     }
     ```
+
+## Architecture
+
+### JsonRpcTransport Layer
+
+The client uses a dedicated `JsonRpcTransport` class that handles the JSON-RPC protocol specifics:
+
+- **Envelope Creation:** Automatically wraps requests in proper JSON-RPC 2.0 format with `jsonrpc`, `id`, `method`, and `params` fields
+- **Snake Case Methods:** RPC method names are converted to snake_case as required by the NEAR protocol
+- **Error Handling:** Properly handles JSON-RPC error responses and converts them to exceptions
+- **Type Safety:** Uses Kotlin's reified generics for compile-time type checking
+
+### Key Components
+
+- **`JsonRpcTransport`**: Core transport class handling HTTP communication and JSON-RPC protocol
+- **`JsonRpcModels`**: Contains error models and shared data structures
+- **`NearRpcClient`**: Generated client class with type-safe methods for all RPC endpoints
 
 ## Development & Contribution
 

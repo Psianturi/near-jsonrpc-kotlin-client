@@ -116,34 +116,7 @@ async function generateClient(spec: OpenAPIObject) {
     // First, generate the base classes needed for all RPC calls
     const baseRpcContent = `package com.near.jsonrpc.client
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.json.JsonElement
-
-@Serializable
-internal data class JsonRpcRequest<T>(
-    val jsonrpc: String = "2.0",
-    val id: String = "dontcare",
-    val method: String,
-    val params: T
-)
-
-@Serializable
-internal data class JsonRpcResponse<T>(
-    val jsonrpc: String,
-    val id: String,
-    val result: T? = null,
-    val error: JsonRpcError? = null
-)
-
-@Serializable
-data class JsonRpcError(
-    val code: Int,
-    val message: String,
-    val data: JsonElement? = null,
-    @SerialName("name")
-    val errorType: String? = null,
-)
+import com.near.jsonrpc.JsonRpcError
 
 class NearRpcException(message: String, val error: JsonRpcError) : RuntimeException(message)
 
@@ -156,44 +129,14 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
     let clientClassContent = `package com.near.jsonrpc.client
 
 import com.near.jsonrpc.types.*
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
+import com.near.jsonrpc.JsonRpcTransport
 
 /**
  * A Kotlin Multiplatform JSON-RPC client for the NEAR Protocol.
  *
- * @property client The Ktor HttpClient used for making requests.
- * @property rpcUrl The URL of the NEAR JSON-RPC endpoint.
+ * @property transport The JsonRpcTransport used for making requests.
  */
-class NearRpcClient(private val rpcUrl: String, private val client: HttpClient) {
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        classDiscriminator = "request_type" // Important for handling param polymorphism
-    }
-
-    private suspend inline fun <reified T, reified R> call(method: String, params: T): R {
-        val request = JsonRpcRequest(method = method, params = params)
-        
-        val httpResponse: HttpResponse = client.post(rpcUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(request)
-        }
-
-        val response = httpResponse.body<JsonRpcResponse<R>>()
-
-        if (response.error != null) {
-            throw NearRpcException("RPC Error: \${response.error.message} (Code: \${response.error.code})", response.error)
-        }
-        
-        return response.result!!
-    }
+class NearRpcClient(private val transport: JsonRpcTransport) {
 `;
 
     const paths = spec.paths;
@@ -250,10 +193,10 @@ class NearRpcClient(private val rpcUrl: String, private val client: HttpClient) 
 
         clientClassContent += `
     /**
-     * ${operation.description?.trim().replace(/\n/g, '\n     * ')}
-     */
+      * ${operation.description?.trim().replace(/\n/g, '\n     * ')}
+      */
     suspend fun ${functionName}(${paramsSignature}): ${returnType} {
-        return call<${paramsKotlinType ?? "kotlinx.serialization.json.JsonObject"}, ${returnType}>("${rpcMethodName}", ${paramsVariable})
+        return transport.call<${paramsKotlinType ?? "kotlinx.serialization.json.JsonObject"}, ${returnType}>("${rpcMethodName}", ${paramsVariable})
     }
 `;
     }

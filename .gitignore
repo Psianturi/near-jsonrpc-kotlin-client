@@ -21,6 +21,10 @@ yarn-error.log*
 *.jar
 *.klib
 
+# Downloaded files
+gradle/wrapper/gradle-*.jar
+gradle/wrapper/gradle-*.zip
+
 # OS-specific
 .DS_Store
 Thumbs.db
