@@ -5,34 +5,25 @@ A Kotlin Multiplatform client for the NEAR JSON-RPC API. This project is auto-ge
 
 ## Project Status
 
-**✅ JsonRpcTransport Implementation Complete!** The library now features a robust transport layer for JSON-RPC communication with NEAR blockchain.
+**JsonRpcTransport is now live!** 🚀 Successfully implemented a robust transport layer for NEAR JSON-RPC communication. The core functionality is working great on JVM, with comprehensive unit tests in place.
 
-**Completed Milestones:**
-- ✅ **Project Setup:** Configured a multi-module Gradle project recognized by Android Studio/IntelliJ IDEA.
-- ✅ **Type Generation (`types` module):** The generator successfully creates serializable Kotlin `data class` models for all RPC schemas.
-- ✅ **JsonRpcTransport Core:** Implemented complete `JsonRpcTransport` class with:
-  - JSON-RPC 2.0 envelope creation
-  - Snake_case method name conversion
-  - Type-safe generic calls with reified types
-  - Comprehensive error handling
-  - Ktor HTTP client integration
-- ✅ **Generator Integration:** Modified code generator to use `JsonRpcTransport.call<Params,Result>()` pattern
-- ✅ **Build System:** JVM compilation and JAR creation successful
-- ✅ **Fallback Support:** Created patch script for post-generation modifications
-- ✅ **Documentation:** Updated README with architecture details and usage examples
-- ✅ **Housekeeping:** Enhanced `.gitignore` and maintained Apache-2.0 `LICENSE`.
+**What's Working:**
+- ✅ **JsonRpcTransport Core:** Complete implementation with JSON-RPC 2.0 support, snake_case methods, and type-safe generics
+- ✅ **Unit Tests:** Mock-based tests covering success and error scenarios
+- ✅ **JVM Build:** Clean compilation and JAR creation
+- ✅ **Generator Integration:** Modified to use the new transport layer
+- ✅ **Documentation:** Updated with real examples and architecture details
 
-**Current Status:**
-- 🎯 **Core Functionality:** JsonRpcTransport compiles and builds successfully
+**Current Setup:**
 - 🎯 **JVM Target:** Fully functional and tested
-- ⚠️ **JS Targets:** Repository configuration issues (non-blocking for JVM usage)
-- 🎯 **Generator:** Modified and ready for client code generation
+- ⚠️ **JS Targets:** Temporarily disabled to avoid Node.js dependency issues (can be re-enabled later)
+- 🎯 **Generator:** Ready to produce JsonRpcTransport-based client code
 
 **Next Steps:**
-- 🚧 **Generate NearRpcClient:** Run generator to create the complete client with JsonRpcTransport integration
-- 🚧 **Implement Unit Tests:** Create test suites for JsonRpcTransport functionality
-- 🚧 **Setup CI/CD:** Add GitHub Actions for automated building and testing
-- 🚧 **Publish Packages:** Prepare for Maven Central publication
+- Generate the complete NearRpcClient using the updated generator
+- Add integration examples with real NEAR RPC calls
+- Set up GitHub Actions for automated testing
+- Re-enable JS targets when needed
 
 ## Usage
 
@@ -143,6 +134,29 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
 - **`JsonRpcTransport`**: Core transport class handling HTTP communication and JSON-RPC protocol
 - **`JsonRpcModels`**: Contains error models and shared data structures
 - **`NearRpcClient`**: Generated client class with type-safe methods for all RPC endpoints
+- **`JsonRpcTransportTest`**: Unit tests using Ktor MockEngine for HTTP request/response testing
+
+### Testing
+
+Added solid unit tests for the JsonRpcTransport using Ktor's MockEngine. This lets you test the HTTP layer without hitting real NEAR nodes:
+
+```kotlin
+@Test
+fun testSuccessfulCall() = runTest {
+    val mockResponse = """{"jsonrpc": "2.0", "result": {"bar": "baz"}, "id": "1"}"""
+    val mockEngine = MockEngine { respond(mockResponse, HttpStatusCode.OK) }
+
+    val transport = JsonRpcTransport(HttpClient(mockEngine), "https://rpc.testnet.near.org")
+    val result: DummyResult = transport.call("dummy_method", DummyParams("hello"))
+
+    assertEquals("baz", result.bar)
+}
+```
+
+**Run the tests:**
+```bash
+./gradlew :packages:client:jvmTest  # Just JVM tests (recommended)
+```
 
 ## Development & Contribution
 

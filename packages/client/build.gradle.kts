@@ -5,10 +5,11 @@ plugins {
 
 kotlin {
     jvm()
-    js(IR) {
-        browser()
-        nodejs()
-    }
+    // Temporarily disabled JS target to avoid Node.js dependency issues
+    // js(IR) {
+    //     browser()
+    //     nodejs()
+    // }
 
     sourceSets {
         val commonMain by getting {
@@ -27,6 +28,8 @@ kotlin {
                 implementation(kotlin("test"))
                 // Dependency for Ktor mock client
                 implementation("io.ktor:ktor-client-mock:2.3.4")
+                // Coroutines test for runTest
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
             }
         }
     }
