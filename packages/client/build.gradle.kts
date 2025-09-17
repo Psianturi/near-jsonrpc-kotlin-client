@@ -21,6 +21,9 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:2.3.4")
                 implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
+
+                // kotlinx.serialization for JsonElement
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
             }
         }
         val commonTest by getting {
@@ -30,6 +33,16 @@ kotlin {
                 implementation("io.ktor:ktor-client-mock:2.3.4")
                 // Coroutines test for runTest
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                // Ktor client for JVM integration tests
+                implementation("io.ktor:ktor-client-cio:2.3.4")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
             }
         }
     }

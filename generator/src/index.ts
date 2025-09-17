@@ -130,6 +130,8 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
 
 import com.near.jsonrpc.types.*
 import com.near.jsonrpc.JsonRpcTransport
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.buildJsonObject
 
 /**
  * A Kotlin Multiplatform JSON-RPC client for the NEAR Protocol.
@@ -170,12 +172,31 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
                 if (paramsSchema) {
                     paramsKotlinType = getKotlinType(paramsSchema, spec);
                     // Only add parameter if a valid type was found
-                    if (paramsKotlinType && paramsKotlinType !== "Any") {
+                    if (paramsKotlinType && paramsKotlinType !== "Any" && paramsKotlinType !== "Map<String, Any>") {
                         paramsSignature = `params: ${paramsKotlinType}`;
                         paramsVariable = "params";
                     }
                 }
             }
+        }
+
+        // Special handling for known RPC methods with parameters
+        if (rpcMethodName === "block" && !paramsSignature) {
+            paramsSignature = "params: BlockReference";
+            paramsVariable = "params";
+            paramsKotlinType = "BlockReference";
+        } else if (rpcMethodName === "query" && !paramsSignature) {
+            paramsSignature = "params: RpcQueryRequest";
+            paramsVariable = "params";
+            paramsKotlinType = "RpcQueryRequest";
+        } else if (rpcMethodName === "gas_price" && !paramsSignature) {
+            paramsSignature = "params: RpcGasPriceRequest";
+            paramsVariable = "params";
+            paramsKotlinType = "RpcGasPriceRequest";
+        } else if (rpcMethodName === "tx" && !paramsSignature) {
+            paramsSignature = "params: RpcTransactionStatusRequest";
+            paramsVariable = "params";
+            paramsKotlinType = "RpcTransactionStatusRequest";
         }
 
         // --- Determine Return Type (Type-Safe) ---
@@ -187,8 +208,27 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
             const fullResponseSchema = spec.components?.schemas?.[responseRefName] as SchemaObject;
             if (fullResponseSchema?.properties?.result) {
                 const resultSchema = fullResponseSchema.properties.result as (SchemaObject | ReferenceObject);
-                returnType = getKotlinType(resultSchema, spec);
+                const detectedType = getKotlinType(resultSchema, spec);
+                // Use specific types when available, fallback to JsonElement only for complex objects
+                if (detectedType !== "Any" && detectedType !== "Map<String, Any>") {
+                    returnType = detectedType;
+                }
             }
+        }
+
+        // Special handling for known RPC methods to use proper response types
+        if (rpcMethodName === "status") {
+            returnType = "RpcStatusResponse";
+        } else if (rpcMethodName === "block") {
+            returnType = "RpcBlockResponse";
+        } else if (rpcMethodName === "gas_price") {
+            returnType = "RpcGasPriceResponse";
+        } else if (rpcMethodName === "query") {
+            returnType = "RpcQueryResponse";
+        } else if (rpcMethodName === "tx") {
+            returnType = "RpcTransactionResponse";
+        } else if (rpcMethodName === "validators") {
+            returnType = "RpcValidatorResponse";
         }
 
         clientClassContent += `
@@ -199,6 +239,21 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
         return transport.call<${paramsKotlinType ?? "kotlinx.serialization.json.JsonObject"}, ${returnType}>("${rpcMethodName}", ${paramsVariable})
     }
 `;
+
+        // Add method alias for snake_case methods if different from camelCase
+        const snakeCaseMethod = rpcMethodName.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+        if (snakeCaseMethod !== functionName && rpcMethodName.includes('_')) {
+            clientClassContent += `
+    /**
+      * ${operation.description?.trim().replace(/\n/g, '\n     * ')}
+      * @deprecated Use ${functionName} instead
+      */
+    @Deprecated("Use ${functionName} instead", ReplaceWith("${functionName}(${paramsVariable})"))
+    suspend fun ${snakeCaseMethod}(${paramsSignature}): ${returnType} {
+        return ${functionName}(${paramsVariable})
+    }
+`;
+        }
     }
 
     clientClassContent += `}\n`;
