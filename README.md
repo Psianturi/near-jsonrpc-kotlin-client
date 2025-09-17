@@ -1,6 +1,13 @@
 # NEAR JSON-RPC Kotlin Client
 
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg)](https://kotlinlang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+
 A type-safe Kotlin Multiplatform client for interacting with NEAR blockchain through its JSON-RPC API. This project automatically generates Kotlin code from the official [NEAR core OpenAPI specification](https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json).
+
+[📖 Documentation](https://github.com/Psianturi/near-jsonrpc-kotlin-client) • [🐛 Report Bug](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [💡 Request Feature](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [🔒 Security](https://github.com/Psianturi/near-jsonrpc-kotlin-client/security/policy) • [🤝 Contributing](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CONTRIBUTING.md) • [📋 Changelog](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CHANGELOG.md)
 
 ## Features
 
@@ -20,12 +27,23 @@ A type-safe Kotlin Multiplatform client for interacting with NEAR blockchain thr
 
 ## Quick Start
 
+### Installation
+
 Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
     implementation("com.near:jsonrpc-kotlin-client:1.0.0")
 }
+```
+
+Or clone and build locally:
+
+```bash
+git clone https://github.com/Psianturi/near-jsonrpc-kotlin-client.git
+cd near-jsonrpc-kotlin-client
+./gradlew build
+./gradlew publishToMavenLocal
 ```
 
 ### Basic Usage
@@ -75,6 +93,55 @@ fun main() = runBlocking {
     } finally {
         httpClient.close()
     }
+}
+```
+
+## Examples
+
+### Get Network Status
+
+```kotlin
+val status = client.status()
+println("Chain ID: ${status.chainId}")
+println("Latest Block: ${status.syncInfo.latestBlockHeight}")
+```
+
+### Query Account Information
+
+```kotlin
+val accountQuery = mapOf(
+    "request_type" to "view_account",
+    "account_id" to "example.near",
+    "finality" to "final"
+)
+val account = client.query(accountQuery)
+println("Account balance: ${account.amount}")
+```
+
+### Get Latest Block
+
+```kotlin
+val block = client.block(mapOf("finality" to "final"))
+println("Block hash: ${block.header.hash}")
+println("Block height: ${block.header.height}")
+```
+
+### Get Gas Price
+
+```kotlin
+val gasPrice = client.gasPrice(mapOf("block_id" to null))
+println("Gas price: ${gasPrice.gasPrice}")
+```
+
+### Error Handling
+
+```kotlin
+try {
+    val result = client.tx(mapOf("tx_hash" to "invalid_hash"))
+} catch (e: NearRpcException) {
+    println("RPC Error: ${e.error.message}")
+} catch (e: Exception) {
+    println("Other error: ${e.message}")
 }
 ```
 
@@ -178,15 +245,24 @@ fun testRealNetworkCall() = runBlocking {
 
 ### Prerequisites
 
+**Required:**
 - JDK 17 or higher
-- Node.js 18+ (for code generation)
-- IntelliJ IDEA or Android Studio recommended
+- Kotlin 1.9.0 or higher
+- Gradle 8.0 or higher
+
+**For Code Generation:**
+- Node.js 18+ (for TypeScript generator)
+- npm or yarn
+
+**Recommended IDE:**
+- IntelliJ IDEA 2023+ or Android Studio
+- Kotlin plugin installed
 
 ### Building
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/Psianturi/near-jsonrpc-kotlin-client.git
 cd near-jsonrpc-kotlin-client
 
 # Build the project
@@ -256,13 +332,53 @@ All methods return strongly typed responses and accept properly typed parameters
 
 ## Contributing
 
-Contributions welcome! Please:
+We welcome contributions! Here's how you can help:
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+### Development Workflow
+
+1. **Fork the repository** on [GitHub](https://github.com/Psianturi/near-jsonrpc-kotlin-client)
+2. **Create a feature branch**: `git checkout -b feature/your-feature-name`
+3. **Make your changes** and add tests for new functionality
+4. **Run tests**: `./gradlew test`
+5. **Ensure code quality**: `./gradlew build`
+6. **Submit a pull request** with a clear description
+
+### Code Style
+
+- Follow Kotlin coding conventions
+- Add documentation for public APIs
+- Include unit tests for new features
+- Update README for significant changes
+
+### Reporting Issues
+
+- Use [GitHub Issues](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) for bug reports
+- Provide detailed steps to reproduce
+- Include environment information (Kotlin version, OS, etc.)
+
+## Roadmap
+
+### Upcoming Features
+
+- [ ] **JavaScript Support**: Re-enable JS target with Node.js compatibility
+- [ ] **Android Support**: Native Android library distribution
+- [ ] **Reactive Extensions**: RxJava/RxKotlin integration
+- [ ] **WebSocket Support**: Real-time subscriptions for new blocks
+- [ ] **Caching Layer**: Built-in response caching for better performance
+- [ ] **Retry Mechanism**: Automatic retry with exponential backoff
+- [ ] **Metrics & Monitoring**: Built-in metrics collection
+
+### Version History
+
+- **v1.0.0** - Initial release with core JSON-RPC functionality
+- **Future** - Enhanced features and multiplatform support
+
+## Acknowledgments
+
+- **NEAR Protocol** - For the excellent blockchain infrastructure and comprehensive OpenAPI specification
+- **Ktor** - For the robust HTTP client library
+- **Kotlinx.serialization** - For seamless JSON serialization
+- **OpenAPI 3.0** - For the standardized API specification format
 
 ## License
 

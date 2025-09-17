@@ -161,7 +161,7 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
         // --- Determine Parameter Type ---
         let paramsKotlinType: string | null = null;
         let paramsSignature = "";
-        let paramsVariable = "kotlinx.serialization.json.buildJsonObject {}"; // Default to empty JSON object
+        let paramsVariable = "null"; // Default to null for methods without parameters
 
         if (operation.requestBody && "content" in operation.requestBody) {
             const requestSchema = operation.requestBody.content["application/json"].schema as SchemaObject;

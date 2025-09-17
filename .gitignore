@@ -31,3 +31,62 @@ Thumbs.db
 
 # Local configuration
 local.properties
+
+# Kotlin Multiplatform
+.kotlin/
+klib/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Coverage reports
+jacoco/
+coverage/
+htmlcov/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# NetBeans
+nbproject/
+
+# Maven
+target/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Backup files
+*.bak
+*.backup
+*.orig
+*.rej

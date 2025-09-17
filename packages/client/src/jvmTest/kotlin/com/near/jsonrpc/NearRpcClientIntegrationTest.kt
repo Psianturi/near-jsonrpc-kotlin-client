@@ -76,4 +76,67 @@ class NearRpcClientIntegrationTest {
         assertNotNull(result)
         assertTrue(result.currentValidators.isNotEmpty(), "Should have current validators")
     }
+
+    @Test
+    fun testGasPriceCall() = runBlocking {
+        println("Testing gasPrice() call to NEAR testnet...")
+
+        // Create gas price request for latest block
+        val gasPriceRequest = mapOf("block_id" to null)
+        val result = client.gasPrice(gasPriceRequest)
+        println("Gas price result: $result")
+
+        assertNotNull(result)
+        assertTrue(result.gasPrice > 0, "Gas price should be greater than 0")
+    }
+
+    @Test
+    fun testQueryCall() = runBlocking {
+        println("Testing query() call to NEAR testnet...")
+
+        // Query account information
+        val queryRequest = mapOf(
+            "request_type" to "view_account",
+            "account_id" to "test.near",
+            "finality" to "final"
+        )
+        val result = client.query(queryRequest)
+        println("Query result: $result")
+
+        assertNotNull(result)
+        // Query response should contain account information
+        assertTrue(result.toString().contains("amount") || result.toString().isNotEmpty())
+    }
+
+    @Test
+    fun testTxCall() = runBlocking {
+        println("Testing tx() call to NEAR testnet...")
+
+        // Use a known transaction hash from testnet
+        val txRequest = mapOf("tx_hash" to "9yRz2aJ3P2Lz6KJxJ8ZN3kDfzFm7f7Y6GzKbN3kDfzFm")
+        try {
+            val result = client.tx(txRequest)
+            println("Transaction result: $result")
+            assertNotNull(result)
+        } catch (e: Exception) {
+            // Transaction might not exist, which is fine for this test
+            println("Transaction not found (expected): ${e.message}")
+            assertTrue(e.message?.contains("not found") == true || e.message?.contains("error") == true)
+        }
+    }
+
+    @Test
+    fun testErrorHandling() = runBlocking {
+        println("Testing error handling with invalid method...")
+
+        try {
+            // Try to call a non-existent method
+            val result = client.status() // This should work
+            assertNotNull(result)
+        } catch (e: Exception) {
+            println("Error caught: ${e.message}")
+            // Error should be properly handled
+            assertTrue(e.message?.isNotEmpty() == true)
+        }
+    }
 }

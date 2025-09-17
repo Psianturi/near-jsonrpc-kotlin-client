@@ -7,6 +7,7 @@ import io.ktor.http.*
 import kotlinx.serialization.json.*
 import kotlinx.serialization.*
 import kotlinx.coroutines.*
+import com.near.jsonrpc.client.NearRpcException
 
 /**
  * Simple transport that posts a JSON-RPC envelope to `rpcUrl` (should be the full RPC endpoint,
@@ -47,7 +48,8 @@ class JsonRpcTransport(
         val parsed = json.parseToJsonElement(responseText).jsonObject
 
         parsed["error"]?.let { errorElem ->
-            throw RuntimeException("JSON-RPC error: $errorElem")
+            val error = json.decodeFromJsonElement<JsonRpcError>(errorElem)
+            throw NearRpcException("JSON-RPC error: ${error.message}", error)
         }
 
         val resultElem = parsed["result"] ?: throw RuntimeException("JSON-RPC response missing 'result'")
