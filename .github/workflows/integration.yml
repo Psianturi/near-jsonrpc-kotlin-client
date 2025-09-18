@@ -3,7 +3,7 @@ name: Integration Tests (NEAR)
 on:
   workflow_dispatch: {}    # manual trigger
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   integration:
