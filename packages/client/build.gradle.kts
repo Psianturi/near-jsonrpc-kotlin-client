@@ -14,6 +14,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                api(project(":packages:types"))
                 // Depend on the types we just generated
                 implementation(project(":packages:types"))
 
@@ -53,4 +54,8 @@ kotlin {
             excludeTags("integration")
         }
     }
+
+    // Note: Integration tests can be run using:
+    // ./gradlew :packages:client:jvmTest --tests "*NearRpcClientIntegrationTest*"
+    // or with tags: ./gradlew :packages:client:jvmTest -Dgroups=integration
 }

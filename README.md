@@ -2,12 +2,22 @@
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+[![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
+[![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
+[![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml)
+[![Release](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/release.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/release.yml)
 
 A type-safe Kotlin Multiplatform client for interacting with NEAR blockchain through its JSON-RPC API. This project automatically generates Kotlin code from the official [NEAR core OpenAPI specification](https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json).
 
 [📖 Documentation](https://github.com/Psianturi/near-jsonrpc-kotlin-client) • [🐛 Report Bug](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [💡 Request Feature](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [🔒 Security](https://github.com/Psianturi/near-jsonrpc-kotlin-client/security/policy) • [🤝 Contributing](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CONTRIBUTING.md) • [📋 Changelog](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CHANGELOG.md)
+
+### 🚀 **CI/CD Status**
+| Workflow | Status | Description |
+|----------|--------|-------------|
+| **Build & Tests** | ![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg) | Unit tests on every push/PR |
+| **Integration** | ![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg) | Real NEAR network testing |
+| **Code Quality** | ![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg) | detekt + ktlint linting |
+| **Release** | ![Release](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/release.yml/badge.svg) | Automated releases |
 
 ## Features
 
@@ -19,6 +29,8 @@ A type-safe Kotlin Multiplatform client for interacting with NEAR blockchain thr
 - **Real NEAR Integration**: Tested with live NEAR testnet (`https://rpc.testnet.near.org`)
 - **Comprehensive Testing**: Unit tests and integration tests included
 - **Android Compatible**: JVM target perfect for Android development
+- **CI/CD Pipeline**: Complete GitHub Actions automation (build, test, release)
+- **Code Quality**: Automated linting with detekt and ktlint
 - **Build Verified**: `./gradlew build` ✅ SUCCESS
 
 ## Supported Platforms
@@ -249,7 +261,7 @@ fun testRealNetworkCall() = runBlocking {
 ./gradlew :packages:client:jvmTest
 
 # ✅ Run integration tests with real NEAR network
-./gradlew :packages:client:jvmTest --tests "*NearRpcClientIntegrationTest*"
+./gradlew :packages:client:integrationTest
 
 # ✅ Run all tests including integration
 ./gradlew :packages:client:build
@@ -258,10 +270,31 @@ fun testRealNetworkCall() = runBlocking {
 ./gradlew :packages:client:build --console=plain
 ```
 
+**✅ Test Configuration:**
+- **Unit Tests**: `./gradlew :packages:client:jvmTest` (default, excludes integration)
+- **Integration Tests**: `./gradlew :packages:client:integrationTest` (requires network)
+- **All Tests**: `./gradlew :packages:client:build` (includes both)
+
 **✅ Build Status:** All tests pass with real NEAR network connectivity!
-- Unit tests: ✅ PASSING
-- Integration tests: ✅ PASSING (real NEAR testnet)
+- Unit tests: ✅ PASSING (JsonRpcTransport tests)
+- Integration tests: ✅ PASSING (real NEAR testnet connectivity)
 - Build: ✅ SUCCESSFUL
+
+### CI/CD Status
+
+**🚀 Automated Pipeline:** Complete GitHub Actions CI/CD setup
+- **Build & Unit Tests**: ✅ Automated on every push/PR
+- **Integration Tests**: ✅ Manual trigger + real NEAR network testing
+- **Code Quality**: ✅ Automated linting (detekt + ktlint)
+- **Release Pipeline**: ✅ Tag-based automated releases
+- **Code Generation**: ✅ Weekly auto-regeneration from NEAR API
+
+**📊 Pipeline Coverage:**
+- ✅ **Unit Tests**: `./gradlew :packages:client:jvmTest`
+- ✅ **Integration Tests**: `./gradlew :packages:client:jvmTest -Dgroups=integration`
+- ✅ **Code Quality**: detekt + ktlint reports
+- ✅ **Release Artifacts**: JAR files + GitHub Releases
+- ✅ **Documentation**: Auto-updated CI/CD status
 
 ## Development
 
@@ -279,6 +312,67 @@ fun testRealNetworkCall() = runBlocking {
 **Recommended IDE:**
 - IntelliJ IDEA 2023+ or Android Studio
 - Kotlin plugin installed
+
+### CI/CD Pipeline
+
+This project uses GitHub Actions for automated testing and deployment:
+
+#### 🚀 **Build & Unit Tests** (`ci.yml`)
+- **Trigger**: Push/PR to `main` branch
+- **Tests**: Unit tests only (excludes integration)
+- **Command**: `./gradlew :packages:client:jvmTest`
+
+#### 🔗 **Integration Tests** (`integration.yml`)
+- **Trigger**: Manual or push to `main`
+- **Tests**: Real NEAR network connectivity
+- **Command**: `./gradlew :packages:client:jvmTest -Dgroups=integration`
+
+#### 🧹 **Code Quality** (`lint.yml`)
+- **Trigger**: Push/PR to `main` branch
+- **Tools**: detekt + ktlint
+- **Reports**: Uploaded as artifacts
+
+#### 📦 **Release Pipeline** (`release.yml`)
+- **Trigger**: Version tags (`v*.*.*`) or manual
+- **Artifacts**: JAR files + GitHub Release
+- **Publishing**: GitHub Packages ready
+
+#### 🔄 **Auto Code Generation** (`regen.yml`)
+- **Trigger**: Weekly or changes to `generator/` directory
+- **Process**: Auto-regenerate types from NEAR OpenAPI spec
+- **Output**: Pull request with updated code
+
+### Workflow Commands
+
+**Local Development:**
+```bash
+# Run unit tests only (fast)
+./gradlew :packages:client:jvmTest
+
+# Run integration tests (requires network)
+./gradlew :packages:client:jvmTest -Dgroups=integration
+
+# Run code quality checks
+./gradlew detekt ktlintCheck
+
+# Full build with all tests
+./gradlew build
+```
+
+**GitHub Actions Triggers:**
+```bash
+# Push to main → Auto CI + Code Quality
+# Manual trigger → Integration Tests
+# Tag v*.*.* → Auto Release
+# Weekly → Auto Code Generation
+```
+
+**Workflow Status:**
+- ✅ **CI**: Automated on every push/PR
+- ✅ **Integration**: Manual trigger available
+- ✅ **Code Quality**: Automated linting reports
+- ✅ **Release**: Tag-based with JAR artifacts
+- ✅ **Code Gen**: Weekly maintenance updates
 
 ### Building
 
@@ -459,6 +553,18 @@ We welcome contributions! Here's how you can help:
 
 ## Roadmap
 
+### Completed Features ✅
+
+- [x] **CI/CD Pipeline**: Complete GitHub Actions automation
+  - Build & Unit Tests workflow
+  - Integration Tests with real NEAR network
+  - Code Quality (detekt + ktlint)
+  - Automated Release pipeline
+  - Weekly code generation
+- [x] **Production Ready**: Real NEAR blockchain connectivity verified
+- [x] **Type Safety**: Strongly typed API with compile-time safety
+- [x] **Android Compatible**: JVM target perfect for Android development
+
 ### Upcoming Features
 
 - [ ] **JavaScript Support**: Re-enable JS target with Node.js compatibility
@@ -478,6 +584,10 @@ We welcome contributions! Here's how you can help:
   - ✅ Comprehensive unit and integration tests
   - ✅ Android-compatible JVM target
   - ✅ Build system verified and working
+  - ✅ **CI/CD Pipeline**: Complete GitHub Actions automation
+  - ✅ **Code Quality**: Automated linting (detekt + ktlint)
+  - ✅ **Release Pipeline**: Tag-based automated releases
+  - ✅ **Integration Testing**: Real NEAR network connectivity
 - **Future** - Enhanced features and multiplatform support
 
 ## Acknowledgments

@@ -10,7 +10,9 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import org.junit.jupiter.api.Tag
 
+@Tag("integration")
 class NearRpcClientIntegrationTest {
 
     private val transport = JsonRpcTransport(

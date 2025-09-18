@@ -1,0 +1,55 @@
+name: Regenerate Types (generator)
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'   # Mingguan, sesuaikan
+  workflow_dispatch:
+  push:
+    paths:
+      - 'generator/**'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install generator deps
+        working-directory: ./generator
+        run: |
+          npm ci
+
+      - name: Run generator
+        working-directory: ./generator
+        run: |
+          npm run generate
+          node patches/patch-jsonrpc.js || true
+
+      - name: Commit generated changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore(generator): regenerate types and client"
+          file_pattern: |
+            packages/types/**
+            packages/client/**
+          branch: regen/codegen-${{ github.run_id }}
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions@github.com
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(generator): regenerate types and client"
+          branch: regen/codegen-${{ github.run_id }}
+          title: "Regenerate types & client (automated)"
+          body: "Automated regeneration of types and client from OpenAPI spec."

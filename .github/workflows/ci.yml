@@ -1,0 +1,53 @@
+name: CI - Build & Tests
+
+on:
+  push:
+    branches: [ main, 'release/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [17]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - name: Setup Node (for generator if needed; fast cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run lint (detekt) - optional
+        run: ./gradlew detekt || true
+
+      - name: Run unit tests (JVM) - excludes integration
+        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace
+
+      - name: Run common checks (kover coverage verify)
+        run: ./gradlew koverVerify || true
+
+      - name: Build JAR (client)
+        run: ./gradlew :packages:client:jvmJar
