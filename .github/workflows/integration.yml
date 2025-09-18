@@ -23,6 +23,11 @@ jobs:
       - name: Grant execute for gradlew
         run: chmod +x ./gradlew
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.3
+
       - name: Install Node (if generator required)
         uses: actions/setup-node@v4
         with:
@@ -36,7 +41,7 @@ jobs:
           max_attempts: 3
           command: |
             # Run integration tests with proper tagging and network matrix
-            ./gradlew :packages:client:jvmTest -Dgroups=integration --info --stacktrace
+            ./gradlew :packages:client:jvmTest -Dgroups=integration --no-daemon --stacktrace --continue
         env:
           NEAR_RPC_URL: ${{ secrets.NEAR_RPC_URL }} # optional override
           NEAR_NETWORK: ${{ matrix.network }}

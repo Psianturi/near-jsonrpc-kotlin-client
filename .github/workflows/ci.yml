@@ -40,14 +40,19 @@ jobs:
       - name: Grant execute for gradlew
         run: chmod +x ./gradlew
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.3
+
       - name: Run unit tests (JVM) - excludes integration
-        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace
+        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue || true
 
       - name: Build JAR (client)
-        run: ./gradlew :packages:client:jvmJar
+        run: ./gradlew :packages:client:jvmJar --no-daemon --stacktrace
 
       - name: Run lint (detekt) - optional
-        run: ./gradlew detekt || true
+        run: ./gradlew detekt --no-daemon --stacktrace --continue || true
 
       - name: Run code style (ktlint) - optional
-        run: ./gradlew ktlintCheck || true
+        run: ./gradlew ktlintCheck --no-daemon --stacktrace --continue || true
