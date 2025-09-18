@@ -8,6 +8,9 @@ on:
 jobs:
   integration:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        network: [mainnet, testnet]
     steps:
       - uses: actions/checkout@v4
 
@@ -25,9 +28,14 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: Run Integration tests (JVM)
+      - name: Run Integration tests (${{ matrix.network }})
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: |
+            # Run integration tests with proper tagging and network matrix
+            ./gradlew :packages:client:jvmTest -Dgroups=integration --info --stacktrace
         env:
           NEAR_RPC_URL: ${{ secrets.NEAR_RPC_URL }} # optional override
-        run: |
-          # Run integration tests with proper tagging
-          ./gradlew :packages:client:jvmTest -Dgroups=integration --info --stacktrace
+          NEAR_NETWORK: ${{ matrix.network }}

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [17]
+        java: [17, 21]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,3 +51,14 @@ jobs:
 
       - name: Build JAR (client)
         run: ./gradlew :packages:client:jvmJar
+
+      - name: Generate JaCoCo coverage report
+        run: ./gradlew :packages:client:jvmTest --info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./packages/client/build/reports/jacoco/test/jacocoTestReport.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false

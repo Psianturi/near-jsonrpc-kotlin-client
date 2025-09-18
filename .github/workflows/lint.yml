@@ -38,6 +38,7 @@ jobs:
       - name: Run Kotlin Code Style (ktlint)
         run: ./gradlew ktlintCheck --no-daemon --stacktrace || true
 
+
       - name: Upload detekt reports
         uses: actions/upload-artifact@v4
         if: always()
