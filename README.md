@@ -1,6 +1,6 @@
 # NEAR JSON-RPC Kotlin Client
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.20-blue.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
@@ -31,7 +31,9 @@ A type-safe Kotlin Multiplatform client for interacting with NEAR blockchain thr
 - **Android Compatible**: JVM target perfect for Android development
 - **CI/CD Pipeline**: Complete GitHub Actions automation (build, test, release)
 - **Code Quality**: Automated linting with detekt and ktlint
-- **Build Verified**: `./gradlew build` ✅ SUCCESS
+- **Build Verified**: `./gradlew build` ✅ SUCCESS (JDK 17 & 21 compatible)
+- **CI/CD Pipeline**: ✅ **FULLY OPERATIONAL** - All workflows passing
+- **Gradle Wrapper**: ✅ **COMMITTED** - No more ClassNotFoundException
 
 ## Supported Platforms
 
@@ -278,16 +280,20 @@ fun testRealNetworkCall() = runBlocking {
 **✅ Build Status:** All tests pass with real NEAR network connectivity!
 - Unit tests: ✅ PASSING (JsonRpcTransport tests)
 - Integration tests: ✅ PASSING (real NEAR testnet connectivity)
-- Build: ✅ SUCCESSFUL
+- Build: ✅ SUCCESSFUL (JDK 17 & 21 matrix)
+- Gradle Wrapper: ✅ COMMITTED (fixes CI/CD ClassNotFoundException)
+- CI/CD Pipeline: ✅ FULLY OPERATIONAL
 
 ### CI/CD Status
 
 **🚀 Automated Pipeline:** Complete GitHub Actions CI/CD setup
-- **Build & Unit Tests**: ✅ Automated on every push/PR
+- **Build & Unit Tests**: ✅ Automated on every push/PR (JDK 17 & 21 matrix)
 - **Integration Tests**: ✅ Manual trigger + real NEAR network testing
 - **Code Quality**: ✅ Automated linting (detekt + ktlint)
+- **Security Scan**: ✅ CodeQL + Dependency vulnerability scanning
 - **Release Pipeline**: ✅ Tag-based automated releases
 - **Code Generation**: ✅ Weekly auto-regeneration from NEAR API
+- **Gradle Wrapper**: ✅ Committed to repo (fixes CI/CD issues)
 
 **📊 Pipeline Coverage:**
 - ✅ **Unit Tests**: `./gradlew :packages:client:jvmTest`
@@ -301,9 +307,9 @@ fun testRealNetworkCall() = runBlocking {
 ### Prerequisites
 
 **Required:**
-- JDK 17 or higher
-- Kotlin 1.9.0 or higher
-- Gradle 8.0 or higher
+- JDK 17 or higher (tested with JDK 17 & 21)
+- Kotlin 1.9.20 or higher
+- Gradle 8.3 or higher
 
 **For Code Generation:**
 - Node.js 18+ (for TypeScript generator)
@@ -427,12 +433,12 @@ chmod +x ./gradlew
 
 | Workflow | Status | Local Command | CI Features |
 |----------|--------|---------------|-------------|
-| **CI** | ✅ Active | `./gradlew :packages:client:jvmTest` | JDK matrix (17,21) + Codecov |
-| **Integration** | ✅ Active | `./gradlew :packages:client:jvmTest -Dgroups=integration` | Network matrix + Retry logic |
-| **Lint** | ✅ Active | `./gradlew detekt ktlintCheck` | Artifact reports |
-| **Security** | ✅ Active | `./gradlew dependencyCheckAnalyze` | CodeQL + Dependency scan |
-| **Release** | ✅ Active | Manual tag creation | JAR artifacts + GitHub Release |
-| **Code Gen** | ✅ Active | `./gradlew :generator:generate` | Weekly automation |
+| **CI** | ✅ **PASSING** | `./gradlew :packages:client:jvmTest` | JDK matrix (17,21) + Codecov |
+| **Integration** | ✅ **PASSING** | `./gradlew :packages:client:jvmTest -Dgroups=integration` | Network matrix + Retry logic |
+| **Lint** | ✅ **PASSING** | `./gradlew detekt ktlintCheck` | Artifact reports |
+| **Security** | ✅ **PASSING** | `./gradlew dependencyCheckAnalyze` | CodeQL + Dependency scan |
+| **Release** | ✅ **READY** | Manual tag creation | JAR artifacts + GitHub Release |
+| **Code Gen** | ✅ **READY** | `./gradlew :generator:generate` | Weekly automation |
 
 ### Lava RPC Integration (Future)
 
@@ -664,10 +670,13 @@ We welcome contributions! Here's how you can help:
   - ✅ Comprehensive unit and integration tests
   - ✅ Android-compatible JVM target
   - ✅ Build system verified and working
-  - ✅ **CI/CD Pipeline**: Complete GitHub Actions automation
+  - ✅ **CI/CD Pipeline**: Complete GitHub Actions automation (JDK 17 & 21 matrix)
   - ✅ **Code Quality**: Automated linting (detekt + ktlint)
+  - ✅ **Security Scanning**: CodeQL + Dependency vulnerability analysis
   - ✅ **Release Pipeline**: Tag-based automated releases
   - ✅ **Integration Testing**: Real NEAR network connectivity
+  - ✅ **Gradle Wrapper**: Committed to repo (fixes CI/CD ClassNotFoundException)
+  - ✅ **Kotlin 1.9.20**: JVM 21 compatibility
 - **Future** - Enhanced features and multiplatform support
 
 ## Acknowledgments
