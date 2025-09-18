@@ -22,8 +22,8 @@ yarn-error.log*
 *.klib
 
 # Downloaded files
-gradle/wrapper/gradle-*.jar
-gradle/wrapper/gradle-*.zip
+# gradle/wrapper/gradle-*.jar  # Commented out to commit wrapper JAR
+# gradle/wrapper/gradle-*.zip  # Commented out to commit wrapper ZIP
 
 # OS-specific
 .DS_Store
