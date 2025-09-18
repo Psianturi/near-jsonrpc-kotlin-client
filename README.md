@@ -315,22 +315,30 @@ fun testRealNetworkCall() = runBlocking {
 
 ### CI/CD Pipeline
 
-This project uses GitHub Actions for automated testing and deployment:
+This project uses GitHub Actions for automated testing and deployment with comprehensive local development support.
 
 #### 🚀 **Build & Unit Tests** (`ci.yml`)
 - **Trigger**: Push/PR to `main` branch
 - **Tests**: Unit tests only (excludes integration)
-- **Command**: `./gradlew :packages:client:jvmTest`
+- **JDK Matrix**: Java 17 & 21 compatibility testing
+- **Coverage**: JaCoCo + Codecov integration
 
 #### 🔗 **Integration Tests** (`integration.yml`)
 - **Trigger**: Manual or push to `main`
 - **Tests**: Real NEAR network connectivity
+- **Network Matrix**: Mainnet & testnet parallel testing
+- **Retry Logic**: 3 attempts with 10min timeout
 - **Command**: `./gradlew :packages:client:jvmTest -Dgroups=integration`
 
 #### 🧹 **Code Quality** (`lint.yml`)
 - **Trigger**: Push/PR to `main` branch
 - **Tools**: detekt + ktlint
 - **Reports**: Uploaded as artifacts
+
+#### 🔒 **Security Scanning** (`security.yml`)
+- **Trigger**: Weekly + push/PR to `main`
+- **Tools**: CodeQL + Dependency vulnerability scan
+- **Reports**: Security analysis artifacts
 
 #### 📦 **Release Pipeline** (`release.yml`)
 - **Trigger**: Version tags (`v*.*.*`) or manual
@@ -342,37 +350,109 @@ This project uses GitHub Actions for automated testing and deployment:
 - **Process**: Auto-regenerate types from NEAR OpenAPI spec
 - **Output**: Pull request with updated code
 
-### Workflow Commands
+### Local Development Commands
 
-**Local Development:**
+#### Prerequisites
 ```bash
-# Run unit tests only (fast)
+# JDK 17 or 21
+java -version
+
+# Make gradlew executable
+chmod +x ./gradlew
+```
+
+#### Build & Unit Tests
+```bash
+# Clean build all modules
+./gradlew clean build
+
+# Unit tests only (fast, no network)
 ./gradlew :packages:client:jvmTest
 
-# Run integration tests (requires network)
-./gradlew :packages:client:jvmTest -Dgroups=integration
-
-# Run code quality checks
-./gradlew detekt ktlintCheck
-
-# Full build with all tests
-./gradlew build
+# With coverage report
+./gradlew jacocoTestReport
+# Report: packages/client/build/reports/jacoco/test/html/index.html
 ```
 
-**GitHub Actions Triggers:**
+#### Integration Tests
 ```bash
-# Push to main → Auto CI + Code Quality
-# Manual trigger → Integration Tests
-# Tag v*.*.* → Auto Release
-# Weekly → Auto Code Generation
+# Mainnet testing
+./gradlew :packages:client:jvmTest -Dgroups=integration -PrpcUrl=https://rpc.mainnet.near.org
+
+# Testnet testing
+./gradlew :packages:client:jvmTest -Dgroups=integration -PrpcUrl=https://rpc.testnet.near.org
+
+# Custom RPC endpoint (for Lava RPC)
+./gradlew :packages:client:jvmTest -Dgroups=integration -PrpcUrl=YOUR_RPC_URL
 ```
 
-**Workflow Status:**
-- ✅ **CI**: Automated on every push/PR
-- ✅ **Integration**: Manual trigger available
-- ✅ **Code Quality**: Automated linting reports
-- ✅ **Release**: Tag-based with JAR artifacts
-- ✅ **Code Gen**: Weekly maintenance updates
+#### Code Quality & Linting
+```bash
+# Static analysis
+./gradlew detekt
+
+# Code style check
+./gradlew ktlintCheck
+
+# Auto-fix formatting
+./gradlew ktlintFormat
+```
+
+#### Security Scanning
+```bash
+# Dependency vulnerabilities
+./gradlew dependencyCheckAnalyze
+# Report: build/reports/dependency-check-report.html
+```
+
+#### Full Test Suite
+```bash
+# All tests including integration
+./gradlew build
+
+# Generate all reports
+./gradlew build jacocoTestReport dependencyCheckAnalyze
+```
+
+### GitHub Actions Triggers
+
+```bash
+# Push/PR to main → Auto CI + Code Quality + Security
+# Manual trigger → Integration Tests (mainnet + testnet)
+# Tag v*.*.* → Auto Release with JAR artifacts
+# Weekly → Auto Code Generation + Security Scan
+```
+
+### Workflow Status & Features
+
+| Workflow | Status | Local Command | CI Features |
+|----------|--------|---------------|-------------|
+| **CI** | ✅ Active | `./gradlew :packages:client:jvmTest` | JDK matrix (17,21) + Codecov |
+| **Integration** | ✅ Active | `./gradlew :packages:client:jvmTest -Dgroups=integration` | Network matrix + Retry logic |
+| **Lint** | ✅ Active | `./gradlew detekt ktlintCheck` | Artifact reports |
+| **Security** | ✅ Active | `./gradlew dependencyCheckAnalyze` | CodeQL + Dependency scan |
+| **Release** | ✅ Active | Manual tag creation | JAR artifacts + GitHub Release |
+| **Code Gen** | ✅ Active | `./gradlew :generator:generate` | Weekly automation |
+
+### Lava RPC Integration (Future)
+
+Once Lava RPC API key is available:
+
+1. **Add GitHub Secrets:**
+   - `LAVA_RPC_URL`
+   - `LAVA_RPC_KEY`
+
+2. **Update integration.yml:**
+   ```yaml
+   env:
+     RPC_LAVA: ${{ secrets.LAVA_RPC_URL }}
+     RPC_API_KEY: ${{ secrets.LAVA_RPC_KEY }}
+   ```
+
+3. **Local Testing:**
+   ```bash
+   ./gradlew :packages:client:jvmTest -Dgroups=integration -PrpcUrl=$LAVA_RPC_URL -PrpcKey=$LAVA_RPC_KEY
+   ```
 
 ### Building
 
