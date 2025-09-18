@@ -33,10 +33,10 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run Kotlin Linting (detekt)
-        run: ./gradlew detekt --no-daemon --stacktrace || true
+        run: ./gradlew detekt --no-daemon --stacktrace --continue || true
 
       - name: Run Kotlin Code Style (ktlint)
-        run: ./gradlew ktlintCheck --no-daemon --stacktrace || true
+        run: ./gradlew ktlintCheck --no-daemon --stacktrace --continue || true
 
 
       - name: Upload detekt reports

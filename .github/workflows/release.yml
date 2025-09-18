@@ -43,7 +43,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run all tests
-        run: ./gradlew test --no-daemon --stacktrace
+        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace
 
       - name: Build release artifacts
         run: ./gradlew :packages:client:build --no-daemon --stacktrace

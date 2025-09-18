@@ -57,7 +57,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run dependency check
-        run: ./gradlew dependencyCheckAnalyze || true
+        run: ./gradlew dependencyCheckAnalyze --no-daemon --stacktrace || true
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4

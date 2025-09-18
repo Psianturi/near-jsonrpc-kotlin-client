@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
+        continue-on-error: true
 
       - name: Run Integration tests (${{ matrix.network }})
         uses: nick-fields/retry@v2

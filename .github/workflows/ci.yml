@@ -40,23 +40,14 @@ jobs:
       - name: Grant execute for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run lint (detekt) - optional
-        run: ./gradlew detekt || true
-
       - name: Run unit tests (JVM) - excludes integration
         run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace
 
       - name: Build JAR (client)
         run: ./gradlew :packages:client:jvmJar
 
-      - name: Generate JaCoCo coverage report
-        run: ./gradlew jacocoTestReport || true
+      - name: Run lint (detekt) - optional
+        run: ./gradlew detekt || true
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        if: always()
-        with:
-          file: ./packages/client/build/reports/jacoco/test/jacocoTestReport.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
+      - name: Run code style (ktlint) - optional
+        run: ./gradlew ktlintCheck || true
