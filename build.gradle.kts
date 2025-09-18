@@ -4,5 +4,5 @@ plugins {
 
     `kotlin-dsl`
 
-    id("org.jetbrains.kotlin.multiplatform") version "1.9.0" apply false
+    id("org.jetbrains.kotlin.multiplatform") version "1.9.20" apply false
 }
