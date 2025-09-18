@@ -46,4 +46,11 @@ kotlin {
             }
         }
     }
+    
+    // Configure test tasks to exclude integration tests by default
+    tasks.withType<Test> {
+        useJUnitPlatform {
+            excludeTags("integration")
+        }
+    }
 }

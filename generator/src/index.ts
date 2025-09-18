@@ -229,6 +229,18 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
             returnType = "RpcTransactionResponse";
         } else if (rpcMethodName === "validators") {
             returnType = "RpcValidatorResponse";
+        } else if (rpcMethodName === "client_config") {
+            returnType = "RpcClientConfigResponse";
+        } else if (rpcMethodName === "genesis_config") {
+            returnType = "GenesisConfig";
+        } else if (rpcMethodName === "network_info") {
+            returnType = "RpcNetworkInfoResponse";
+        } else if (rpcMethodName === "chunk") {
+            returnType = "RpcChunkResponse";
+        } else if (rpcMethodName === "changes") {
+            returnType = "RpcStateChangesInBlockResponse";
+        } else if (rpcMethodName === "block_effects") {
+            returnType = "RpcStateChangesInBlockResponse";
         }
 
         clientClassContent += `
