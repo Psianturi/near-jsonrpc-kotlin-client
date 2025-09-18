@@ -41,7 +41,7 @@ jobs:
           max_attempts: 3
           command: |
             # Run integration tests with proper tagging and network matrix
-            ./gradlew :packages:client:jvmTest -Dgroups=integration --no-daemon --stacktrace --continue
+            gradle :packages:client:jvmTest -Dgroups=integration --no-daemon --stacktrace --continue
         env:
           NEAR_RPC_URL: ${{ secrets.NEAR_RPC_URL }} # optional override
           NEAR_NETWORK: ${{ matrix.network }}

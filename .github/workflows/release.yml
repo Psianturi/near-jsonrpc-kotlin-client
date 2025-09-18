@@ -48,10 +48,10 @@ jobs:
           gradle-version: 8.3
 
       - name: Run all tests
-        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue
+        run: gradle :packages:client:jvmTest --no-daemon --stacktrace --continue
 
       - name: Build release artifacts
-        run: ./gradlew :packages:client:build --no-daemon --stacktrace --continue
+        run: gradle :packages:client:build --no-daemon --stacktrace --continue
 
       - name: Generate changelog
         id: changelog

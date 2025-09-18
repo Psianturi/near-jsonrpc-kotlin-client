@@ -62,7 +62,7 @@ jobs:
           gradle-version: 8.3
 
       - name: Run dependency check
-        run: ./gradlew dependencyCheckAnalyze --no-daemon --stacktrace --continue || echo "Dependency check completed with warnings"
+        run: gradle dependencyCheckAnalyze --no-daemon --stacktrace --continue || echo "Dependency check completed with warnings"
 
       - name: Upload dependency check report
         uses: actions/upload-artifact@v4
