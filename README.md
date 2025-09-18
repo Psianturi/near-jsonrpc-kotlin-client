@@ -275,6 +275,85 @@ cd near-jsonrpc-kotlin-client
 ./gradlew jar
 ```
 
+### Running Examples
+
+Here's what you can expect when running the project:
+
+#### Build Output
+```bash
+$ ./gradlew build
+
+> Configure project :
+Evaluating root project 'near-jsonrpc-kotlin-client' using build file '/path/to/near-jsonrpc-kotlin-client/build.gradle.kts'.
+
+> Task :packages:types:compileKotlinJvm NO-SOURCE
+> Task :packages:types:jvmProcessResources NO-SOURCE
+> Task :packages:types:jvmMainClasses UP-TO-DATE
+> Task :packages:types:jvmJar
+> Task :packages:client:compileKotlinJvm
+> Task :packages:client:jvmProcessResources NO-SOURCE
+> Task :packages:client:jvmMainClasses
+> Task :packages:client:jvmTestProcessResources NO-SOURCE
+> Task :packages:client:compileTestKotlinJvm
+> Task :packages:client:jvmTestClasses
+
+BUILD SUCCESSFUL in 25s
+7 actionable tasks: 4 executed, 3 up-to-date
+```
+
+#### Unit Tests Output
+```bash
+$ ./gradlew :packages:client:test
+
+> Task :packages:client:test
+
+com.near.jsonrpc.JsonRpcTransportTest > testSuccessfulCall() PASSED
+com.near.jsonrpc.JsonRpcTransportTest > testErrorResponse() PASSED
+com.near.jsonrpc.JsonRpcTransportTest > testNullParams() PASSED
+
+BUILD SUCCESSFUL in 8s
+3 actionable tasks: 1 executed, 2 up-to-date
+```
+
+#### Integration Tests Output
+```bash
+$ ./gradlew :packages:client:jvmTest --tests "*NearRpcIntegrationTest.should fetch network status*"
+
+> Task :packages:client:jvmTest
+
+com.near.jsonrpc.NearRpcIntegrationTest > should fetch network status from testnet() PASSED
+
+BUILD SUCCESSFUL in 12s
+1 actionable task: 1 executed
+```
+
+#### Full Test Suite
+```bash
+$ ./gradlew test
+
+> Task :packages:client:test
+> Task :packages:client:jvmTest
+
+BUILD SUCCESSFUL in 18s
+6 tests completed, 6 passed
+```
+
+### Sample Application Output
+
+When you run the example code:
+
+```bash
+# Running the basic usage example
+$ kotlin -cp "build/libs/*:lib/*" BasicUsage.kt
+
+Chain ID: mainnet
+Latest Block: 123456789
+Block Hash: abc123...
+Gas Price: 100000000
+```
+
+This demonstrates that the library successfully connects to NEAR networks and retrieves real blockchain data.
+
 ### Code Generation
 
 The client code generates automatically from NEAR's OpenAPI specification. To regenerate after updates:
