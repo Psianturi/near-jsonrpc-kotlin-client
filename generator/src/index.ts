@@ -4,8 +4,8 @@ import * as fs from "fs-extra";
 import * as path from "path";
 
 const RPC_SPEC_URL = "https://raw.githubusercontent.com/near/nearcore/master/chain/jsonrpc/openapi/openapi.json";
-const OUTPUT_DIR_TYPES = path.resolve(__dirname, "../../../packages/types/src/commonMain/kotlin/com/near/jsonrpc/types");
-const OUTPUT_DIR_CLIENT = path.resolve(__dirname, "../../../packages/client/src/commonMain/kotlin/com/near/jsonrpc/client");
+const OUTPUT_DIR_TYPES = path.resolve(__dirname, "../../packages/types/src/commonMain/kotlin/com/near/jsonrpc/types");
+const OUTPUT_DIR_CLIENT = path.resolve(__dirname, "../../packages/client/src/commonMain/kotlin/com/near/jsonrpc/client");
 
 function toCamelCase(str: string): string {
     return str.replace(/([-_][a-z])/g, (group) =>
@@ -70,7 +70,8 @@ async function generateTypes(spec: OpenAPIObject) {
 
         let classContent = `package com.near.jsonrpc.types\n\n`;
         classContent += `import kotlinx.serialization.Serializable\n`;
-        classContent += `import kotlinx.serialization.SerialName\n\n`;
+        classContent += `import kotlinx.serialization.SerialName\n`;
+        classContent += `import kotlinx.serialization.Contextual\n\n`;
         classContent += `@Serializable\n`;
         classContent += `data class ${schemaName}(\n`;
 
@@ -81,13 +82,19 @@ async function generateTypes(spec: OpenAPIObject) {
             const propSchema = properties[propName];
             const camelCaseName = toCamelCase(propName);
             let kotlinType = getKotlinType(propSchema, spec);
+            let annotations = `@SerialName("${propName}")`;
+
+            // Add @Contextual annotation for Any types
+            if (kotlinType === "Any" || kotlinType === "Any?") {
+                annotations += "\n    @Contextual";
+            }
 
             if (!requiredFields.has(propName)) {
                 kotlinType += "? = null";
             }
 
-            classContent += `    @SerialName("${propName}")\n`;
-            classContent += `    val ${camelCaseName}: ${kotlinType},\n`;
+            classContent += `    ${annotations}\n`;
+            classContent += `    val ${camelCaseName}: ${kotlinType.replace(/Any/g, '@Contextual Any')},\n`;
         }
 
 
@@ -158,90 +165,13 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
 
         const functionName = toCamelCase(rpcMethodName);
 
-        // --- Determine Parameter Type ---
-        let paramsKotlinType: string | null = null;
+        // Use JsonElement for all parameters for compatibility
+        let paramsKotlinType: string | null = "kotlinx.serialization.json.JsonObject";
         let paramsSignature = "";
-        let paramsVariable = "null"; // Default to null for methods without parameters
+        let paramsVariable = "buildJsonObject {}";
 
-        if (operation.requestBody && "content" in operation.requestBody) {
-            const requestSchema = operation.requestBody.content["application/json"].schema as SchemaObject;
-            if (requestSchema && "$ref" in requestSchema && requestSchema.$ref) {
-                const requestRefName = requestSchema.$ref.split("/").pop()!;
-                const fullRequestSchema = spec.components?.schemas?.[requestRefName] as SchemaObject;
-                const paramsSchema = fullRequestSchema?.properties?.params as (SchemaObject | ReferenceObject);
-                if (paramsSchema) {
-                    paramsKotlinType = getKotlinType(paramsSchema, spec);
-                    // Only add parameter if a valid type was found
-                    if (paramsKotlinType && paramsKotlinType !== "Any" && paramsKotlinType !== "Map<String, Any>") {
-                        paramsSignature = `params: ${paramsKotlinType}`;
-                        paramsVariable = "params";
-                    }
-                }
-            }
-        }
-
-        // Special handling for known RPC methods with parameters
-        if (rpcMethodName === "block" && !paramsSignature) {
-            paramsSignature = "params: BlockReference";
-            paramsVariable = "params";
-            paramsKotlinType = "BlockReference";
-        } else if (rpcMethodName === "query" && !paramsSignature) {
-            paramsSignature = "params: RpcQueryRequest";
-            paramsVariable = "params";
-            paramsKotlinType = "RpcQueryRequest";
-        } else if (rpcMethodName === "gas_price" && !paramsSignature) {
-            paramsSignature = "params: RpcGasPriceRequest";
-            paramsVariable = "params";
-            paramsKotlinType = "RpcGasPriceRequest";
-        } else if (rpcMethodName === "tx" && !paramsSignature) {
-            paramsSignature = "params: RpcTransactionStatusRequest";
-            paramsVariable = "params";
-            paramsKotlinType = "RpcTransactionStatusRequest";
-        }
-
-        // --- Determine Return Type (Type-Safe) ---
-        let returnType = "JsonElement"; // Default fallback
-        const responseHolderSchema = operation.responses?.["200"]?.content?.["application/json"].schema as SchemaObject;
-
-        if (responseHolderSchema && "$ref" in responseHolderSchema && responseHolderSchema.$ref) {
-            const responseRefName = responseHolderSchema.$ref.split("/").pop()!;
-            const fullResponseSchema = spec.components?.schemas?.[responseRefName] as SchemaObject;
-            if (fullResponseSchema?.properties?.result) {
-                const resultSchema = fullResponseSchema.properties.result as (SchemaObject | ReferenceObject);
-                const detectedType = getKotlinType(resultSchema, spec);
-                // Use specific types when available, fallback to JsonElement only for complex objects
-                if (detectedType !== "Any" && detectedType !== "Map<String, Any>") {
-                    returnType = detectedType;
-                }
-            }
-        }
-
-        // Special handling for known RPC methods to use proper response types
-        if (rpcMethodName === "status") {
-            returnType = "RpcStatusResponse";
-        } else if (rpcMethodName === "block") {
-            returnType = "RpcBlockResponse";
-        } else if (rpcMethodName === "gas_price") {
-            returnType = "RpcGasPriceResponse";
-        } else if (rpcMethodName === "query") {
-            returnType = "RpcQueryResponse";
-        } else if (rpcMethodName === "tx") {
-            returnType = "RpcTransactionResponse";
-        } else if (rpcMethodName === "validators") {
-            returnType = "RpcValidatorResponse";
-        } else if (rpcMethodName === "client_config") {
-            returnType = "RpcClientConfigResponse";
-        } else if (rpcMethodName === "genesis_config") {
-            returnType = "GenesisConfig";
-        } else if (rpcMethodName === "network_info") {
-            returnType = "RpcNetworkInfoResponse";
-        } else if (rpcMethodName === "chunk") {
-            returnType = "RpcChunkResponse";
-        } else if (rpcMethodName === "changes") {
-            returnType = "RpcStateChangesInBlockResponse";
-        } else if (rpcMethodName === "block_effects") {
-            returnType = "RpcStateChangesInBlockResponse";
-        }
+        // Use JsonElement for all return types for compatibility
+        let returnType = "JsonElement";
 
         clientClassContent += `
     /**

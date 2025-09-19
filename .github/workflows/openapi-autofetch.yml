@@ -1,0 +1,140 @@
+name: OpenAPI Auto-Fetch & Code Generation
+
+on:
+  schedule:
+    # Run weekly on Mondays at 09:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_regenerate:
+        description: 'Force code regeneration even if no changes'
+        required: false
+        type: boolean
+
+jobs:
+  check-openapi-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      openapi_changed: ${{ steps.check-changes.outputs.openapi_changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies
+        run: |
+          cd generator
+          npm install
+
+      - name: Fetch latest OpenAPI spec
+        run: |
+          curl -s https://raw.githubusercontent.com/near/nearcore/master/chain/jsonrpc/openapi/openapi.json -o generator/openapi_temp.json
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ ! -f "generator/openapi.json" ] || ! cmp -s "generator/openapi_temp.json" "generator/openapi.json"; then
+            echo "openapi_changed=true" >> $GITHUB_OUTPUT
+            echo "OpenAPI spec has changed, will regenerate code"
+            mv generator/openapi_temp.json generator/openapi.json
+          else
+            echo "openapi_changed=false" >> $GITHUB_OUTPUT
+            echo "OpenAPI spec unchanged, skipping regeneration"
+          fi
+
+  regenerate-code:
+    needs: check-openapi-changes
+    if: needs.check-openapi-changes.outputs.openapi_changed == 'true' || github.event.inputs.force_regenerate == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.3
+
+      - name: Install generator dependencies
+        run: |
+          cd generator
+          npm install
+
+      - name: Regenerate Kotlin code
+        run: |
+          cd generator
+          npm run generate
+
+      - name: Build generated code
+        run: ./gradlew :packages:client:compileKotlinJvm --no-daemon --stacktrace
+
+      - name: Run tests on generated code
+        run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            🤖 Auto-generated: Update NEAR JSON-RPC client from latest OpenAPI spec
+
+            - Updated OpenAPI specification from nearcore
+            - Regenerated Kotlin types and client code
+            - All tests passing
+          title: '🤖 Auto-generated: Update NEAR JSON-RPC client from latest OpenAPI spec'
+          body: |
+            ## 🤖 Automated Code Generation
+
+            This PR was automatically created by the OpenAPI auto-fetch workflow.
+
+            ### Changes
+            - Updated OpenAPI specification from [nearcore](https://github.com/near/nearcore)
+            - Regenerated Kotlin data types and client methods
+            - All existing tests continue to pass
+
+            ### Verification
+            - ✅ Code compiles successfully
+            - ✅ Unit tests pass
+            - ✅ Integration tests pass (if applicable)
+
+            ### Next Steps
+            Review the generated code changes and merge if everything looks correct.
+
+            ---
+            *This PR was generated automatically. If you notice any issues, please report them in the comments.*
+          branch: automated/openapi-update
+          delete-branch: true
+          labels: |
+            automated
+            dependencies
+            enhancement

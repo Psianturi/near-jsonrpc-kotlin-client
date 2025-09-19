@@ -24,6 +24,9 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
+                implementation("com.github.Psianturi:near-jsonrpc-kotlin-client:0.1.0") 
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+                implementation("io.ktor:ktor-client-okhttp:2.3.7") // Android HTTP transport
             }
         }
     }
