@@ -5,27 +5,64 @@
 [![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
 
-A type-safe Kotlin client for NEAR blockchain JSON-RPC API. Connect to NEAR mainnet and testnet with full type safety and automatic code generation from the official OpenAPI specification.
+A fully automated, type-safe Kotlin client for NEAR blockchain JSON-RPC API. This project automatically generates Kotlin code from the official [NEAR core OpenAPI specification](https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json) to provide developers with a high-quality, native mobile experience.
+
+The library consists of two packages:
+- **near-jsonrpc-types** - Generated Kotlin data classes and serialization
+- **near-jsonrpc-client** - Type-safe RPC client with all NEAR endpoints
 
 [🐛 Report Bug](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [💡 Request Feature](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [🤝 Contributing](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CONTRIBUTING.md) • [📋 Changelog](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CHANGELOG.md)
 
 ## ✨ Features
 
-- **Type-Safe API** - Strongly typed methods with compile-time safety
-- **Auto-Generated** - Code generated from official NEAR OpenAPI specification
-- **Multiplatform** - JVM support with Android compatibility
-- **Production Ready** - Tested with real NEAR networks
-- **Comprehensive Testing** - Unit and integration tests included
+- **🔄 Fully Automated** - GitHub Actions automatically regenerates code from latest NEAR API
+- **🛡️ Type-Safe** - Strongly typed methods with compile-time safety
+- **🤖 Auto-Generated** - 248+ Kotlin classes from official NEAR OpenAPI spec
+- **📱 Android Ready** - JVM target perfect for Android development
+- **🧪 Well Tested** - Unit and integration tests with real NEAR networks
+- **📦 Two Packages** - Separate types and client libraries for flexibility
+
+## 📦 Packages
+
+This project provides two Kotlin packages:
+
+### near-jsonrpc-types
+Contains 248+ auto-generated Kotlin data classes from NEAR's OpenAPI specification.
+
+```kotlin
+dependencies {
+    implementation("com.near:jsonrpc-types:1.0.0")
+}
+```
+
+### near-jsonrpc-client
+Full RPC client with type-safe methods for all NEAR endpoints.
+
+```kotlin
+dependencies {
+    implementation("com.near:jsonrpc-client:1.0.0")
+    // Includes types automatically
+}
+```
 
 ## 🚀 Quick Start
 
 ### Installation
 
-Add to your `build.gradle.kts`:
+Add the client dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
     implementation("com.near:jsonrpc-kotlin-client:1.0.0")
+}
+```
+
+Or use the packages separately:
+
+```kotlin
+dependencies {
+    implementation("com.near:jsonrpc-types:1.0.0")    // Just types
+    implementation("com.near:jsonrpc-client:1.0.0")   // Client + types
 }
 ```
 
@@ -114,28 +151,84 @@ The library consists of three main components:
 - **NearRpcClient** - Type-safe client with auto-generated methods for all NEAR RPC endpoints
 - **Generated Types** - 248+ Kotlin data classes from NEAR's OpenAPI specification
 
-## 🧪 Testing
+## 🛠️ Development
+
+### Prerequisites
+- JDK 17 or higher
+- Kotlin 1.9.20+
+- Node.js 18+ (for code generation)
+
+### Building & Testing
 
 ```bash
-# Unit tests (fast, no network)
+# Clone the repository
+git clone https://github.com/Psianturi/near-jsonrpc-kotlin-client.git
+cd near-jsonrpc-kotlin-client
+
+# Build all packages
+./gradlew build
+
+# Run unit tests only (fast)
 ./gradlew :packages:client:jvmTest
 
-# Integration tests (real NEAR network)
+# Run integration tests (requires network)
 ./gradlew :packages:client:jvmTest -Dgroups=integration
 
-# Full build with all tests
-./gradlew build
+# Run all tests
+./gradlew test
 ```
+
+### Code Generation
+
+The client code is automatically generated from NEAR's OpenAPI specification:
+
+```bash
+# Install generator dependencies
+npm install --prefix generator
+
+# Generate Kotlin types and client
+npm run generate --prefix generator
+
+# Build generated code
+./gradlew :packages:client:compileKotlinJvm
+```
+
+### GitHub Actions Automation
+
+This project uses automated CI/CD:
+
+- **Weekly regeneration** - Automatically fetches latest NEAR API and regenerates code
+- **PR creation** - Submits generated code changes for review
+- **Automated releases** - Uses release-please for version management
+- **Multi-JDK testing** - Tests on JDK 17 and 21
 
 ## 🤝 Contributing
 
-We welcome contributions! Please:
+We welcome contributions! Here's how to get involved:
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure `./gradlew build` passes
-5. Submit a pull request
+### Development Workflow
+
+1. **Fork & Clone** the repository
+2. **Create feature branch**: `git checkout -b feature/your-feature`
+3. **Make changes** and add tests
+4. **Run tests**: `./gradlew build`
+5. **Submit PR** with clear description
+
+### Code Generation Updates
+
+When NEAR API changes, the code is automatically regenerated:
+
+1. GitHub Actions fetches latest OpenAPI spec weekly
+2. Generates updated Kotlin types and client methods
+3. Creates PR for review and testing
+4. Merges and releases automatically
+
+### Guidelines
+
+- Follow Kotlin coding conventions
+- Add unit tests for new functionality
+- Update documentation for API changes
+- Ensure `./gradlew build` passes
 
 ## 📋 API Reference
 
