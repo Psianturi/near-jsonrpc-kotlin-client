@@ -181,15 +181,53 @@ cd near-jsonrpc-kotlin-client
 # Build all packages
 ./gradlew build
 
-# Run unit tests only (fast)
+# Run unit tests only (fast, no network)
 ./gradlew :packages:client:jvmTest
 
-# Run integration tests (requires network)
+# Run integration tests (connects to real NEAR testnet)
 ./gradlew :packages:client:jvmTest -Dgroups=integration
 
 # Run all tests
 ./gradlew test
 ```
+
+### 📊 Test Results Example
+
+**Unit Tests Output:**
+```bash
+> Task :packages:client:jvmTest
+
+com.near.jsonrpc.JsonRpcTransportTest > testSuccessfulCall() PASSED
+com.near.jsonrpc.JsonRpcTransportTest > testErrorResponse() PASSED
+com.near.jsonrpc.JsonRpcTransportTest > testNullParams() PASSED
+
+BUILD SUCCESSFUL in 8s
+3 tests completed, 3 passed
+```
+
+**Integration Tests Output:**
+```bash
+> Task :packages:client:jvmTest
+
+NearRpcClientIntegrationTest > should fetch network status from testnet() PASSED
+NearRpcClientIntegrationTest > should fetch block from testnet() PASSED
+NearRpcClientIntegrationTest > should fetch gas price from testnet() PASSED
+
+✅ Successfully connected to NEAR testnet!
+Status: {"chain_id":"testnet","sync_info":{"latest_block_height":123456789,...}}
+Gas Price: {"gas_price":"100000000"}
+
+BUILD SUCCESSFUL in 12s
+6 tests completed, 6 passed
+```
+
+### 🎯 Expected Behavior
+
+When tests pass, you should see:
+- ✅ **Unit tests**: All transport layer tests pass (no network required)
+- ✅ **Integration tests**: Successful connection to NEAR testnet with real data
+- ✅ **Build verification**: All packages compile and tests pass
+- ✅ **Type safety**: All generated types serialize/deserialize correctly
 
 ### Code Generation
 
