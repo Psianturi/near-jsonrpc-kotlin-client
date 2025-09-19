@@ -49,11 +49,22 @@ dependencies {
 
 ### Installation
 
-Add the client dependency to your `build.gradle.kts`:
+Add JitPack repository to your `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+Then add the client dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("com.near:jsonrpc-kotlin-client:1.0.0")
+    implementation("com.github.Psianturi:near-jsonrpc-kotlin-client:v1.0.0")
 }
 ```
 
@@ -61,10 +72,12 @@ Or use the packages separately:
 
 ```kotlin
 dependencies {
-    implementation("com.near:jsonrpc-types:1.0.0")    // Just types
-    implementation("com.near:jsonrpc-client:1.0.0")   // Client + types
+    implementation("com.github.Psianturi:near-jsonrpc-types:v1.0.0")    // Just types
+    implementation("com.github.Psianturi:near-jsonrpc-client:v1.0.0")   // Client + types
 }
 ```
+
+**JitPack coordinates:** `com.github.Psianturi:near-jsonrpc-kotlin-client:v1.0.0`
 
 ### Basic Usage
 
