@@ -245,28 +245,65 @@ When NEAR API changes, the code is automatically regenerated:
 
 ## 📋 API Reference
 
-### Network
-- `status()` - Network status and version
-- `networkInfo()` - Network connection info
+The client provides comprehensive access to all NEAR RPC endpoints with type-safe methods:
 
-### Blocks
-- `block(params)` - Block details by height/hash
-- `blockEffects()` - Block transaction effects
+### 🔗 **Network & Node Information**
+- `status()` - Network status, sync info, validators, and protocol details
+- `networkInfo()` - Current network connections and peer information
+- `clientConfig()` - Node configuration and settings
+- `health()` - Node health status check
 
-### Accounts
-- `query(params)` - Account, contract, and state queries
+### 📦 **Block Operations**
+- `block()` - Block details by height/hash/finality
+- `blockEffects()` - Changes in block across all transactions
+- `chunk()` - Specific chunk details within a block
 
-### Transactions
-- `sendTx()` - Send transaction
-- `tx(params)` - Transaction details by hash
+### 👤 **Account & State Queries**
+- `query()` - Generic queries for accounts, contracts, access keys, and state
+- `changes()` - Account/contract changes for specific blocks
 
-### Validators
-- `validators()` - Current validator information
+### 💸 **Transaction Operations**
+- `sendTx()` - Send transaction and get execution status
+- `tx()` - Transaction details by hash
+- `broadcastTxAsync()` - Send transaction (async, deprecated)
+- `broadcastTxCommit()` - Send transaction (sync, deprecated)
 
-### Gas
-- `gasPrice(params)` - Gas price for specific block
+### ⚡ **Gas & Economics**
+- `gasPrice()` - Gas price for specific block or latest
 
-All methods return strongly typed responses for maximum safety.
+### 🏛️ **Validator Operations**
+- `validators()` - Current epoch validator information
+- `EXPERIMENTALValidatorsOrdered()` - Validators in block producer order
+
+### 🔬 **Experimental & Advanced**
+- `EXPERIMENTALChanges()` - Account/contract changes (deprecated)
+- `EXPERIMENTALChangesInBlock()` - Block-level changes (deprecated)
+- `EXPERIMENTALCongestionLevel()` - Shard congestion information
+- `EXPERIMENTALGenesisConfig()` - Genesis block parameters (deprecated)
+- `EXPERIMENTALLightClientBlockProof()` - Light client proofs
+- `EXPERIMENTALLightClientProof()` - Transaction execution proofs
+- `EXPERIMENTALMaintenanceWindows()` - Node maintenance windows (deprecated)
+- `EXPERIMENTALProtocolConfig()` - Protocol-level parameters
+- `EXPERIMENTALReceipt()` - Receipt details by ID
+- `EXPERIMENTALSplitStorageInfo()` - Split storage configuration
+- `EXPERIMENTALTxStatus()` - Transaction status with full details
+
+### 🌟 **Light Client**
+- `lightClientProof()` - Transaction execution proofs
+- `nextLightClientBlock()` - Next light client block
+
+### 🏗️ **Genesis & Configuration**
+- `genesisConfig()` - Initial genesis block parameters
+- `maintenanceWindows()` - Current epoch maintenance windows
+
+### 📊 **Response Types**
+All methods return strongly typed `JsonElement` responses that can be deserialized into specific response types like:
+- `RpcStatusResponse` - Network status information
+- `RpcBlockResponse` - Block data and headers
+- `RpcGasPriceResponse` - Gas pricing information
+- `RpcQueryResponse` - Query results
+- `RpcTransactionResponse` - Transaction execution details
+- And 240+ other generated types for complete type safety
 
 ## 📄 License
 
