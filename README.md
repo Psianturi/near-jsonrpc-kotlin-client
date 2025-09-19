@@ -1,58 +1,89 @@
 # NEAR JSON-RPC Kotlin Client
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.20-blue.svg)](https://kotlinlang.org)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
 [![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml)
 
-A fully automated, type-safe Kotlin client for NEAR blockchain JSON-RPC API. This project automatically generates Kotlin code from the official [NEAR core OpenAPI specification](https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json) to provide developers with a high-quality, native mobile experience.
+Kotlin Multiplatform JSON-RPC client for NEAR, generated from the official OpenAPI spec and designed for Android/JVM first. The code generator keeps models and client methods in sync with NEAR core, while CI ensures everything compiles, tests, and is ready for consumption.
 
-The library consists of two packages:
-- **near-jsonrpc-types** - Generated Kotlin data classes and serialization
-- **near-jsonrpc-client** - Type-safe RPC client with all NEAR endpoints
+- Two Kotlin modules:
+  - near-jsonrpc-types (generated models + serialization)
+  - near-jsonrpc-client (RPC client using Ktor + kotlinx.serialization)
+- Fully automated regeneration via GitHub Actions (weekly/manual)
+- JVM-first, Android-ready; minimal dependencies and ergonomic APIs
 
-[🐛 Report Bug](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [💡 Request Feature](https://github.com/Psianturi/near-jsonrpc-kotlin-client/issues) • [🤝 Contributing](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CONTRIBUTING.md) • [📋 Changelog](https://github.com/Psianturi/near-jsonrpc-kotlin-client/blob/main/CHANGELOG.md)
+--------------------------------------------------------------------------------
 
-## ✨ Features
+## Background
 
-- **🔄 Fully Automated** - GitHub Actions automatically regenerates code from latest NEAR API
-- **🛡️ Type-Safe** - Strongly typed methods with compile-time safety
-- **🤖 Auto-Generated** - 248+ Kotlin data classes from official NEAR OpenAPI spec
-- **📱 Android Ready** - JVM target perfect for Android development
-- **🧪 Well Tested** - Unit and integration tests with real NEAR networks (80%+ coverage)
-- **📦 Two Packages** - Separate types and client libraries for flexibility
-- **🔄 Auto-Regeneration** - Weekly automated code generation from latest NEAR API
+The NEAR Protocol exposes a JSON-RPC interface and publishes an OpenAPI spec. However, a type-safe Kotlin client has been missing, slowing down native mobile and JVM developers. This repository provides:
+- Automated code generation from NEAR’s OpenAPI spec
+- Developer-friendly Kotlin APIs following Kotlin naming conventions
+- Strong testing and CI automation for long-term maintainability
+- Apache-2.0 Licensed public good
 
-## 📦 Packages
+Note on OpenAPI vs implementation:
+- The JSON-RPC implementation expects all methods to POST to the same path (“/”), while the OpenAPI lists unique paths per method. The transport intentionally ignores paths and always POSTs to the base RPC URL.
 
-This project provides two Kotlin packages:
+See the transport implementation here:
+- [JsonRpcTransport.call()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt:30)
 
-### near-jsonrpc-types
-Contains 248+ auto-generated Kotlin data classes from NEAR's OpenAPI specification.
+--------------------------------------------------------------------------------
 
-```kotlin
-dependencies {
-    implementation("com.near:jsonrpc-types:1.0.0")
-}
-```
+## Scope of Work (implemented)
 
-### near-jsonrpc-client
-Full RPC client with type-safe methods for all NEAR endpoints.
+1) OpenAPI parsing & code generation (TypeScript-based generator)
+- Parse nearcore OpenAPI spec and generate Kotlin models and client methods.
+- Apply snake_case (from API) → camelCase (Kotlin) naming.
+- Patch: always POST to the base RPC endpoint path “/” (JSON-RPC 2.0).
 
-```kotlin
-dependencies {
-    implementation("com.near:jsonrpc-client:1.0.0")
-    // Includes types automatically
-}
-```
+2) Two Kotlin packages (Kotlin ecosystem naming)
+- near-jsonrpc-types
+  - Generated Kotlin data classes + kotlinx.serialization annotations.
+  - Lightweight; only depends on kotlinx-serialization-json.
+- near-jsonrpc-client
+  - Depends on near-jsonrpc-types.
+  - Ktor HTTP transport + JSON-RPC envelope + error handling.
+  - Client wrapper exposing NEAR RPC endpoints.
 
-## 🚀 Quick Start
+3) GitHub Actions automation
+- Fetch latest OpenAPI on schedule or manual dispatch.
+- Regenerate Kotlin code.
+- Build/test; submit PR for human review.
+- Release-please automation prepares version bumps and release PRs.
 
-### Installation
+4) Testing suite
+- Unit tests for transport and serialization paths.
+- Integration tests (manual/optional) against real NEAR RPC endpoints.
 
-Add JitPack repository to your `settings.gradle.kts`:
+5) Documentation
+- README with install and usage for both packages.
+- Contribution guide and regenerating steps.
+- CI/release workflows overview.
 
+--------------------------------------------------------------------------------
+
+## Architecture Overview
+
+- Transport layer: posts JSON-RPC requests to a base URL (ignores per-method paths).
+  - [JsonRpcTransport.call()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt:30)
+- Client layer: convenience wrapper for all NEAR endpoints.
+  - Example endpoint method: [NearRpcClient.status()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/client/NearRpcClient.kt:226)
+- Types layer: generated data classes with kotlinx.serialization.
+
+Modules and key files:
+- near-jsonrpc-types
+  - Gradle: [packages/types/build.gradle.kts](packages/types/build.gradle.kts)
+- near-jsonrpc-client
+  - Gradle: [packages/client/build.gradle.kts](packages/client/build.gradle.kts)
+
+--------------------------------------------------------------------------------
+
+## Installation (JitPack)
+
+settings.gradle.kts:
 ```kotlin
 dependencyResolutionManagement {
     repositories {
@@ -62,282 +93,168 @@ dependencyResolutionManagement {
 }
 ```
 
-Then add the client dependency to your `build.gradle.kts`:
-
+build.gradle.kts (single dependency includes client and types):
 ```kotlin
 dependencies {
-    implementation("com.github.Psianturi:near-jsonrpc-kotlin-client:v1.0.0")
+    implementation("com.github.Psianturi:near-jsonrpc-kotlin-client:main-SNAPSHOT")
 }
 ```
 
-Or use the packages separately:
+Alternatively consume modules separately once published as separate artifacts.
 
+--------------------------------------------------------------------------------
+
+## Usage
+
+Basic client usage (Android/JVM Ktor CIO):
 ```kotlin
-dependencies {
-    implementation("com.github.Psianturi:near-jsonrpc-types:v1.0.0")    // Just types
-    implementation("com.github.Psianturi:near-jsonrpc-client:v1.0.0")   // Client + types
-}
-```
-
-**JitPack coordinates:** `com.github.Psianturi:near-jsonrpc-kotlin-client:v1.0.0`
-
-### Publishing Status
-
-Currently published via **JitPack** for easy integration. Maven Central / GitHub Packages publication is planned for future releases to provide more formal distribution channels.
-
-### Basic Usage
-
-```kotlin
-import com.near.jsonrpc.client.NearRpcClient
 import com.near.jsonrpc.JsonRpcTransport
+import com.near.jsonrpc.client.NearRpcClient
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
-    val httpClient = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
+    val http = HttpClient(CIO) {
+        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
     }
 
-    val transport = JsonRpcTransport(httpClient, "https://rpc.mainnet.near.org")
+    // Transport posts JSON-RPC envelopes to the base RPC URL ("/")
+    val transport = JsonRpcTransport(http, "https://rpc.testnet.near.org")
     val client = NearRpcClient(transport)
 
-    // Get network status
-    val status = client.status()
-    println("Chain: ${status.chainId}")
+    // Query network status
+    val statusJson = client.status() // JsonElement for now
+    println(statusJson)
 
-    // Get gas price
-    val gasPrice = client.gasPrice()
-    println("Gas price: ${gasPrice.gasPrice}")
-
-    httpClient.close()
+    http.close()
 }
-
-> **Note:** For Android app development examples using this library, check out: https://github.com/Psianturi/near-kotlin
 ```
 
-
-
-## 🏗️ Architecture
-
-The library consists of three main components:
-
-- **JsonRpcTransport** - Handles JSON-RPC protocol details and HTTP communication
-- **NearRpcClient** - Type-safe client with auto-generated methods for all NEAR RPC endpoints
-- **Generated Types** - 248+ Kotlin data classes from NEAR's OpenAPI specification
-
-### Type Safety Coverage
-
-Most endpoints return strongly typed models via the `near-jsonrpc-types` package, but some legacy or less commonly used methods still return `JsonElement` for compatibility. We aim for full type coverage in future releases as the API stabilizes.
-
-## 🛠️ Development
-
-### Prerequisites
-- JDK 17 or higher
-- Kotlin 1.9.20+
-- Node.js 18+ (for code generation)
-
-### Building & Testing
-
-```bash
-# Clone the repository
-git clone https://github.com/Psianturi/near-jsonrpc-kotlin-client.git
-cd near-jsonrpc-kotlin-client
-
-# Build all packages
-./gradlew build
-
-# Run unit tests only (fast, no network)
-./gradlew :packages:client:jvmTest
-
-# Run integration tests (connects to real NEAR testnet)
-./gradlew :packages:client:jvmTest -Dgroups=integration
-
-# Run all tests
-./gradlew test
+Typed decode via transport generics (advanced):
+```kotlin
+// You can use the transport directly with a typed result R when you know the schema:
+data class StatusLike(val chainId: String?)
+// val result: StatusLike = transport.call<JsonObject, StatusLike>("status", buildJsonObject {})
 ```
 
-### 📊 Build & Test Results Example
+Notes:
+- The current client methods return JsonElement for broad compatibility. Generated data classes are available to decode into typed models. Incremental typed wrappers can be introduced per endpoint as needed.
 
-**Full Build Output:**
+--------------------------------------------------------------------------------
+
+## Code Generation
+
+OpenAPI source:
+- https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json
+
+Generator:
+- TS/Node script under generator/ that fetches OpenAPI, applies small patches, and emits Kotlin.
+- Always posts JSON-RPC to “/” regardless of per-method OpenAPI paths (implementation reality).
+
+Local regeneration:
 ```bash
-$ ./gradlew build
-
-> Configure project :
-BUILD SUCCESSFUL in 25s
-7 actionable tasks: 4 executed, 3 up-to-date
-
-BUILD SUCCESSFUL in 25s
-```
-
-**Unit Tests Output:**
-```bash
-$ ./gradlew :packages:client:jvmTest
-
-> Task :packages:client:jvmTest
-
-com.near.jsonrpc.JsonRpcTransportTest > testSuccessfulCall() PASSED
-com.near.jsonrpc.JsonRpcTransportTest > testErrorResponse() PASSED
-com.near.jsonrpc.JsonRpcTransportTest > testNullParams() PASSED
-
-BUILD SUCCESSFUL in 8s
-3 tests completed, 3 passed
-```
-
-**Integration Tests Output:**
-```bash
-$ ./gradlew :packages:client:jvmTest -Dgroups=integration
-
-> Task :packages:client:jvmTest
-
-NearRpcClientIntegrationTest > should fetch network status from testnet() PASSED
-NearRpcClientIntegrationTest > should fetch block from testnet() PASSED
-NearRpcClientIntegrationTest > should fetch gas price from testnet() PASSED
-
-✅ Successfully connected to NEAR testnet!
-Status: {"chain_id":"testnet","sync_info":{"latest_block_height":123456789,...}}
-Gas Price: {"gas_price":"100000000"}
-
-BUILD SUCCESSFUL in 12s
-6 tests completed, 6 passed
-```
-
-### 🎯 Expected Behavior
-
-When tests pass, you should see:
-- ✅ **Unit tests**: All transport layer tests pass (no network required)
-- ✅ **Integration tests**: Successful connection to NEAR testnet with real data
-- ✅ **Build verification**: All packages compile and tests pass
-- ✅ **Type safety**: All generated types serialize/deserialize correctly
-
-### Code Generation
-
-The client code is automatically generated from NEAR's OpenAPI specification:
-
-```bash
-# Install generator dependencies
+# Install generator deps
 npm install --prefix generator
 
-# Generate Kotlin types and client
+# Regenerate Kotlin code (types & client)
 npm run generate --prefix generator
 
 # Build generated code
 ./gradlew :packages:client:compileKotlinJvm
 ```
 
-### Code Generation Automation
+Automation:
+- Weekly scheduled regeneration and manual workflow:
+  - [openapi-autofetch.yml](.github/workflows/openapi-autofetch.yml)
+  - [regen.yml](.github/workflows/regen.yml)
+- CI is pinned to Node 22.x; generation caches npm dependencies.
 
-GitHub Actions automatically maintains the library up-to-date with NEAR's API:
+--------------------------------------------------------------------------------
 
-- **Weekly Schedule** - Fetches latest NEAR OpenAPI spec every Monday at 09:00 UTC
-- **Automated Regeneration** - Generates updated Kotlin types and client methods
-- **PR Creation** - Submits generated code changes for human review and testing
-- **Continuous Updates** - Ensures library stays current with NEAR protocol changes
+## Testing
 
-### Release Automation
+Unit tests (transport logic, serialization):
+```bash
+# Run fast JVM unit tests (no network)
+./gradlew :packages:client:jvmTest
+```
 
-Uses **release-please** for automated versioning and releases:
+Integration tests (manual/optional; hits real RPC):
+```bash
+# Optionally enable and run integration tests locally when needed
+./gradlew :packages:client:jvmTest -Dgroups=integration
+```
 
-- **Conventional Commits** - Analyzes commit messages for version bumps
-- **Automated PRs** - Creates release PRs with changelogs
-- **GitHub Releases** - Automatically creates releases with JAR artifacts
-- **Semantic Versioning** - Follows semver for predictable version increments
+Example unit tests:
+- [JsonRpcTransportTest.kt](packages/client/src/commonTest/kotlin/com/near/jsonrpc/JsonRpcTransportTest.kt)
 
-## 🤝 Contributing
+Example integration tests:
+- [NearRpcClientIntegrationTest.kt](packages/client/src/jvmTest/kotlin/com/near/jsonrpc/NearRpcClientIntegrationTest.kt)
 
-We welcome contributions! Here's how to get involved:
+Recent local verification (JVM):
+```bash
+./gradlew clean build
+# BUILD SUCCESSFUL
+```
 
-### Development Workflow
+--------------------------------------------------------------------------------
 
-1. **Fork & Clone** the repository
-2. **Create feature branch**: `git checkout -b feature/your-feature`
-3. **Make changes** and add tests
-4. **Run tests**: `./gradlew build`
-5. **Submit PR** with clear description
+## GitHub Actions & Release Flow
 
-### Code Generation Updates
+Workflows:
+- CI (build + unit tests): [ci.yml](.github/workflows/ci.yml)
+- Integration tests (manual): [integration.yml](.github/workflows/integration.yml)
+- Lint & code quality: [lint.yml](.github/workflows/lint.yml)
+- Auto-fetch + regenerate from OpenAPI: [openapi-autofetch.yml](.github/workflows/openapi-autofetch.yml)
+- Manual regenerate: [regen.yml](.github/workflows/regen.yml)
+- Release automation: [release-please.yml](.github/workflows/release-please.yml), [release.yml](.github/workflows/release.yml)
 
-When NEAR API changes, the code is automatically regenerated:
+Key points:
+- Node 22.x for generator tasks.
+- Regeneration opens PR with generated code.
+- Release-please proposes version bumps and changelogs.
+- Artifacts are currently consumed via JitPack; GitHub Packages/Maven Central can be added.
 
-1. GitHub Actions fetches latest OpenAPI spec weekly
-2. Generates updated Kotlin types and client methods
-3. Creates PR for review and testing
-4. Merges and releases automatically
+--------------------------------------------------------------------------------
 
-### Guidelines
+## Contribution & Development
 
-- Follow Kotlin coding conventions
-- Add unit tests for new functionality
-- Update documentation for API changes
-- Ensure `./gradlew build` passes
+Prerequisites:
+- JDK 17+
+- Kotlin 1.9.20+
+- Node.js 22+ (only needed for local codegen)
 
-## 📋 API Reference
+Dev workflow:
+```bash
+# Build everything (JVM)
+./gradlew clean build
 
-The client provides comprehensive access to all NEAR RPC endpoints with type-safe methods:
+# Unit tests
+./gradlew :packages:client:jvmTest
 
-### 🔗 **Network & Node Information**
-- `status()` - Network status, sync info, validators, and protocol details
-- `networkInfo()` - Current network connections and peer information
-- `clientConfig()` - Node configuration and settings
-- `health()` - Node health status check
+# Regenerate types/client
+npm install --prefix generator
+npm run generate --prefix generator
+```
 
-### 📦 **Block Operations**
-- `block()` - Block details by height/hash/finality
-- `blockEffects()` - Changes in block across all transactions
-- `chunk()` - Specific chunk details within a block
+Guidelines:
+- Add/adjust tests with code changes.
+- Keep commit messages conventional (feat:, fix:, build:, ci:, docs:, test:, refactor:, chore:).
+- Leave the transport path logic “as is” (always POST to “/”).
 
-### 👤 **Account & State Queries**
-- `query()` - Generic queries for accounts, contracts, access keys, and state
-- `changes()` - Account/contract changes for specific blocks
+--------------------------------------------------------------------------------
 
-### 💸 **Transaction Operations**
-- `sendTx()` - Send transaction and get execution status
-- `tx()` - Transaction details by hash
-- `broadcastTxAsync()` - Send transaction (async, deprecated)
-- `broadcastTxCommit()` - Send transaction (sync, deprecated)
+## Deliverables Checklist
 
-### ⚡ **Gas & Economics**
-- `gasPrice()` - Gas price for specific block or latest
+- ✅ Code generation pipeline (OpenAPI → Kotlin)
+- ✅ Two Kotlin packages (types, client)
+- ✅ GitHub Actions for regeneration, CI, lint, and release prep
+- ✅ Unit tests and optional integration tests
+- ✅ Developer documentation for usage, regeneration, and workflows
+- ⏩ Typed wrappers per endpoint (incremental; transport already supports typed decode)
 
-### 🏛️ **Validator Operations**
-- `validators()` - Current epoch validator information
-- `EXPERIMENTALValidatorsOrdered()` - Validators in block producer order
-
-### 🔬 **Experimental & Advanced**
-- `EXPERIMENTALChanges()` - Account/contract changes (deprecated)
-- `EXPERIMENTALChangesInBlock()` - Block-level changes (deprecated)
-- `EXPERIMENTALCongestionLevel()` - Shard congestion information
-- `EXPERIMENTALGenesisConfig()` - Genesis block parameters (deprecated)
-- `EXPERIMENTALLightClientBlockProof()` - Light client proofs
-- `EXPERIMENTALLightClientProof()` - Transaction execution proofs
-- `EXPERIMENTALMaintenanceWindows()` - Node maintenance windows (deprecated)
-- `EXPERIMENTALProtocolConfig()` - Protocol-level parameters
-- `EXPERIMENTALReceipt()` - Receipt details by ID
-- `EXPERIMENTALSplitStorageInfo()` - Split storage configuration
-- `EXPERIMENTALTxStatus()` - Transaction status with full details
-
-### 🌟 **Light Client**
-- `lightClientProof()` - Transaction execution proofs
-- `nextLightClientBlock()` - Next light client block
-
-### 🏗️ **Genesis & Configuration**
-- `genesisConfig()` - Initial genesis block parameters
-- `maintenanceWindows()` - Current epoch maintenance windows
-
-### 📊 **Response Types**
-All methods return strongly typed `JsonElement` responses that can be deserialized into specific response types like:
-- `RpcStatusResponse` - Network status information
-- `RpcBlockResponse` - Block data and headers
-- `RpcGasPriceResponse` - Gas pricing information
-- `RpcQueryResponse` - Query results
-- `RpcTransactionResponse` - Transaction execution details
-- And 240+ other generated types for complete type safety
-
-## 📄 License
-
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+License: Apache-2.0 (see LICENSE)

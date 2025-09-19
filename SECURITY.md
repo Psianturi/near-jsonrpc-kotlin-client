@@ -15,7 +15,7 @@ If you discover a security vulnerability in this project, please report it respo
 
 ### Contact Information
 
-- **Email**: security@psianturi.dev
+- **Email**: posmajaniuss@gmail.com
 - **GitHub Security Advisories**: [Report here](https://github.com/Psianturi/near-jsonrpc-kotlin-client/security/advisories/new)
 
 ### Reporting Process
