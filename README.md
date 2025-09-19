@@ -162,10 +162,23 @@ cd near-jsonrpc-kotlin-client
 ./gradlew test
 ```
 
-### 📊 Test Results Example
+### 📊 Build & Test Results Example
+
+**Full Build Output:**
+```bash
+$ ./gradlew build
+
+> Configure project :
+BUILD SUCCESSFUL in 25s
+7 actionable tasks: 4 executed, 3 up-to-date
+
+BUILD SUCCESSFUL in 25s
+```
 
 **Unit Tests Output:**
 ```bash
+$ ./gradlew :packages:client:jvmTest
+
 > Task :packages:client:jvmTest
 
 com.near.jsonrpc.JsonRpcTransportTest > testSuccessfulCall() PASSED
@@ -178,6 +191,8 @@ BUILD SUCCESSFUL in 8s
 
 **Integration Tests Output:**
 ```bash
+$ ./gradlew :packages:client:jvmTest -Dgroups=integration
+
 > Task :packages:client:jvmTest
 
 NearRpcClientIntegrationTest > should fetch network status from testnet() PASSED
