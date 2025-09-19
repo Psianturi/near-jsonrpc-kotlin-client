@@ -4,6 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
+[![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml)
 
 A fully automated, type-safe Kotlin client for NEAR blockchain JSON-RPC API. This project automatically generates Kotlin code from the official [NEAR core OpenAPI specification](https://github.com/near/nearcore/blob/master/chain/jsonrpc/openapi/openapi.json) to provide developers with a high-quality, native mobile experience.
 
@@ -120,46 +121,7 @@ fun main() = runBlocking {
 > **Note:** For Android app development examples using this library, check out: https://github.com/Psianturi/near-kotlin
 ```
 
-## 📚 Examples
 
-### Network Status
-```kotlin
-val status = client.status()
-println("Chain: ${status.chainId}")
-println("Latest block: ${status.syncInfo.latestBlockHeight}")
-```
-
-### Account Query
-```kotlin
-val account = client.query(RpcQueryRequest(
-    requestType = "view_account",
-    accountId = "example.near",
-    finality = "final"
-))
-println("Balance: ${account.amount}")
-```
-
-### Block Information
-```kotlin
-val block = client.block(BlockReference(finality = "final"))
-println("Hash: ${block.header.hash}")
-println("Height: ${block.header.height}")
-```
-
-### Gas Price
-```kotlin
-val gasPrice = client.gasPrice(RpcGasPriceRequest())
-println("Gas price: ${gasPrice.gasPrice}")
-```
-
-### Error Handling
-```kotlin
-try {
-    val tx = client.tx(RpcTransactionStatusRequest(txHash = "abc123..."))
-} catch (e: NearRpcException) {
-    println("RPC Error: ${e.error.message}")
-}
-```
 
 ## 🏗️ Architecture
 
