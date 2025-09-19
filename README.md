@@ -17,10 +17,11 @@ The library consists of two packages:
 
 - **🔄 Fully Automated** - GitHub Actions automatically regenerates code from latest NEAR API
 - **🛡️ Type-Safe** - Strongly typed methods with compile-time safety
-- **🤖 Auto-Generated** - 248+ Kotlin classes from official NEAR OpenAPI spec
+- **🤖 Auto-Generated** - 248+ Kotlin data classes from official NEAR OpenAPI spec
 - **📱 Android Ready** - JVM target perfect for Android development
-- **🧪 Well Tested** - Unit and integration tests with real NEAR networks
+- **🧪 Well Tested** - Unit and integration tests with real NEAR networks (80%+ coverage)
 - **📦 Two Packages** - Separate types and client libraries for flexibility
+- **🔄 Auto-Regeneration** - Weekly automated code generation from latest NEAR API
 
 ## 📦 Packages
 
@@ -78,6 +79,10 @@ dependencies {
 ```
 
 **JitPack coordinates:** `com.github.Psianturi:near-jsonrpc-kotlin-client:v1.0.0`
+
+### Publishing Status
+
+Currently published via **JitPack** for easy integration. Maven Central / GitHub Packages publication is planned for future releases to provide more formal distribution channels.
 
 ### Basic Usage
 
@@ -164,6 +169,10 @@ The library consists of three main components:
 - **NearRpcClient** - Type-safe client with auto-generated methods for all NEAR RPC endpoints
 - **Generated Types** - 248+ Kotlin data classes from NEAR's OpenAPI specification
 
+### Type Safety Coverage
+
+Most endpoints return strongly typed models via the `near-jsonrpc-types` package, but some legacy or less commonly used methods still return `JsonElement` for compatibility. We aim for full type coverage in future releases as the API stabilizes.
+
 ## 🛠️ Development
 
 ### Prerequisites
@@ -244,14 +253,23 @@ npm run generate --prefix generator
 ./gradlew :packages:client:compileKotlinJvm
 ```
 
-### GitHub Actions Automation
+### Code Generation Automation
 
-This project uses automated CI/CD:
+GitHub Actions automatically maintains the library up-to-date with NEAR's API:
 
-- **Weekly regeneration** - Automatically fetches latest NEAR API and regenerates code
-- **PR creation** - Submits generated code changes for review
-- **Automated releases** - Uses release-please for version management
-- **Multi-JDK testing** - Tests on JDK 17 and 21
+- **Weekly Schedule** - Fetches latest NEAR OpenAPI spec every Monday at 09:00 UTC
+- **Automated Regeneration** - Generates updated Kotlin types and client methods
+- **PR Creation** - Submits generated code changes for human review and testing
+- **Continuous Updates** - Ensures library stays current with NEAR protocol changes
+
+### Release Automation
+
+Uses **release-please** for automated versioning and releases:
+
+- **Conventional Commits** - Analyzes commit messages for version bumps
+- **Automated PRs** - Creates release PRs with changelogs
+- **GitHub Releases** - Automatically creates releases with JAR artifacts
+- **Semantic Versioning** - Follows semver for predictable version increments
 
 ## 🤝 Contributing
 
