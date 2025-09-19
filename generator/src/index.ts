@@ -4,8 +4,8 @@ import * as fs from "fs-extra";
 import * as path from "path";
 
 const RPC_SPEC_URL = "https://raw.githubusercontent.com/near/nearcore/master/chain/jsonrpc/openapi/openapi.json";
-const OUTPUT_DIR_TYPES = path.resolve(__dirname, "../../packages/types/src/commonMain/kotlin/com/near/jsonrpc/types");
-const OUTPUT_DIR_CLIENT = path.resolve(__dirname, "../../packages/client/src/commonMain/kotlin/com/near/jsonrpc/client");
+const OUTPUT_DIR_TYPES = path.resolve(__dirname, "../../../packages/types/src/commonMain/kotlin/com/near/jsonrpc/types");
+const OUTPUT_DIR_CLIENT = path.resolve(__dirname, "../../../packages/client/src/commonMain/kotlin/com/near/jsonrpc/client");
 
 function toCamelCase(str: string): string {
     return str.replace(/([-_][a-z])/g, (group) =>

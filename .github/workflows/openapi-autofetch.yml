@@ -28,9 +28,7 @@ jobs:
           node-version: '18.x'
 
       - name: Install dependencies
-        run: |
-          cd generator
-          npm install
+        run: npm install --prefix generator
 
       - name: Fetch latest OpenAPI spec
         run: |
@@ -86,14 +84,10 @@ jobs:
           gradle-version: 8.3
 
       - name: Install generator dependencies
-        run: |
-          cd generator
-          npm install
+        run: npm install --prefix generator
 
       - name: Regenerate Kotlin code
-        run: |
-          cd generator
-          npm run generate
+        run: npm run generate --prefix generator
 
       - name: Build generated code
         run: ./gradlew :packages:client:compileKotlinJvm --no-daemon --stacktrace
