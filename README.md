@@ -84,6 +84,8 @@ Modules and key files:
 
 ## Installation (JitPack)
 
+Add the JitPack repository in your settings:
+
 settings.gradle.kts:
 ```kotlin
 dependencyResolutionManagement {
@@ -94,14 +96,24 @@ dependencyResolutionManagement {
 }
 ```
 
-build.gradle.kts (single dependency includes client and types):
+Add the dependency (use your release tag, e.g., 1.0.0):
+
+build.gradle.kts:
 ```kotlin
 dependencies {
-    implementation("com.github.Psianturi:near-jsonrpc-kotlin-client:main-SNAPSHOT")
+    // Primary client (includes dependency on types)
+    implementation("com.github.Psianturi:near-jsonrpc-client:1.0.0")
+
+    // Optional: access types explicitly (usually not required)
+    // implementation("com.github.Psianturi:near-jsonrpc-types:1.0.0")
 }
 ```
 
-Alternatively consume modules separately once published as separate artifacts.
+Notes:
+- For snapshots, you may use a branch or commit hash:
+  - implementation("com.github.Psianturi:near-jsonrpc-client:master-SNAPSHOT")
+  - implementation("com.github.Psianturi:near-jsonrpc-client:<commit-hash>")
+- JDK 17+ recommended for builds.
 
 --------------------------------------------------------------------------------
 

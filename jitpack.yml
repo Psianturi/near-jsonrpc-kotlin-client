@@ -1,0 +1,10 @@
+# JitPack build configuration for near-jsonrpc-kotlin-client
+# - Use JDK 17
+# - Publish Gradle submodules (types, client) to local Maven so JitPack can serve them
+# - Ensure group and version match JitPack coordinates: com.github.Psianturi:artifact:$VERSION
+
+jdk:
+  - openjdk17
+
+install:
+  - ./gradlew clean :packages:types:publishToMavenLocal :packages:client:publishToMavenLocal -Pgroup=com.github.Psianturi -Pversion=$VERSION --no-daemon --stacktrace
