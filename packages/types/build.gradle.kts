@@ -54,10 +54,20 @@ publishing {
 
 koverReport {
     defaults {
-        // Coverage verification disabled for types module (smoke tests added, but many generated classes not tested yet)
-        // Will re-enable when more comprehensive tests are added
+        filters {
+            excludes {
+                // Exclude generated classes from coverage calculation to focus on handwritten logic
+                // All classes in types are generated from OpenAPI, so exclude the entire package
+                classes("com.near.jsonrpc.types.*")
+            }
+        }
         verify {
-            onCheck = false
+            onCheck = true
+            rule {
+                bound {
+                    minValue = 80
+                }
+            }
         }
     }
 }
