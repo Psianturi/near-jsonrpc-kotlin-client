@@ -32,7 +32,6 @@ jobs:
         working-directory: ./generator
         run: |
           npm run generate
-          node patches/patch-jsonrpc.js || true
 
       - name: Commit generated changes
         uses: stefanzweifel/git-auto-commit-action@v4

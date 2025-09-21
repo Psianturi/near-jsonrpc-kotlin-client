@@ -3,7 +3,7 @@ name: Release Please
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 permissions:
@@ -65,16 +65,20 @@ jobs:
       - name: Build release artifacts
         run: ./gradlew :packages:client:build --no-daemon --stacktrace --continue
 
-      - name: Publish to GitHub Packages
+      - name: Verify coverage (Kover ≥80%) - client only
+        run: ./gradlew :packages:client:koverXmlReport :packages:client:koverVerify --no-daemon --stacktrace
+
+      - name: Publish all modules to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./gradlew :packages:client:publishToMavenLocal
-          # For GitHub Packages publishing, add this to build.gradle.kts:
-          # ./gradlew :packages:client:publish
+          ./gradlew publish --no-daemon --stacktrace
 
       - name: Upload JAR artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: near-jsonrpc-client-${{ needs.release-please.outputs.tag_name }}
+          name: near-jsonrpc-kotlin-client-${{ needs.release-please.outputs.tag_name }}
           path: |
             packages/client/build/libs/*.jar
             packages/types/build/libs/*.jar

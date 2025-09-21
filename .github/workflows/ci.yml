@@ -51,6 +51,17 @@ jobs:
       - name: Build JAR (client)
         run: ./gradlew :packages:client:jvmJar --no-daemon --stacktrace
 
+      - name: Run coverage (Kover) and verify ≥80% (client-only)
+        run: ./gradlew :packages:client:koverXmlReport :packages:client:koverVerify --no-daemon --stacktrace
+
+      - name: Upload coverage report (client module)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports-client
+          path: |
+            packages/client/build/reports/kover/**
+          if-no-files-found: warn
+
       - name: Run lint (detekt) - optional
         run: ./gradlew detekt --no-daemon --stacktrace --continue || echo "Detekt completed with warnings"
 

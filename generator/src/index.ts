@@ -135,20 +135,30 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
 
     let clientClassContent = `package com.near.jsonrpc.client
 
-import com.near.jsonrpc.types.*
-import com.near.jsonrpc.JsonRpcTransport
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.buildJsonObject
+ import com.near.jsonrpc.types.*
+ import com.near.jsonrpc.JsonRpcTransport
+ import kotlinx.serialization.json.JsonElement
+ import kotlinx.serialization.json.buildJsonObject
 
-/**
- * A Kotlin Multiplatform JSON-RPC client for the NEAR Protocol.
- *
- * @property transport The JsonRpcTransport used for making requests.
- */
-class NearRpcClient(private val transport: JsonRpcTransport) {
-`;
+ /**
+  * A Kotlin Multiplatform JSON-RPC client for the NEAR Protocol.
+  *
+  * @property transport The JsonRpcTransport used for making requests.
+  */
+ class NearRpcClient(private val transport: JsonRpcTransport) {
+ `;
 
-    const paths = spec.paths;
+     // Typed endpoint overrides for selected methods
+     // - status           -> RpcStatusResponse (no params)
+     // - validators       -> RpcValidatorResponse (no params)
+     // - gas_price        -> RpcGasPriceRequest? -> RpcGasPriceResponse
+     const typedEndpoints: Record<string, { paramsType?: string; returnType: string; paramName?: string; defaultExpr?: string }> = {
+         "status": { returnType: "RpcStatusResponse" },
+         "validators": { returnType: "RpcValidatorResponse" },
+         "gas_price": { paramsType: "RpcGasPriceRequest?", returnType: "RpcGasPriceResponse", paramName: "request", defaultExpr: "null" }
+     };
+
+     const paths = spec.paths;
     for (const path in paths) {
         const pathItem = paths[path];
         if (!pathItem.post) {
@@ -165,13 +175,30 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
 
         const functionName = toCamelCase(rpcMethodName);
 
-        // Use JsonElement for all parameters for compatibility
+        // Defaults (backward compatible): untyped params/result
         let paramsKotlinType: string | null = "kotlinx.serialization.json.JsonObject";
         let paramsSignature = "";
         let paramsVariable = "buildJsonObject {}";
-
-        // Use JsonElement for all return types for compatibility
         let returnType = "JsonElement";
+
+        // Override with typed signatures if configured for this operationId
+        const typed = typedEndpoints[rpcMethodName];
+        if (typed) {
+            // Set typed return
+            returnType = typed.returnType;
+
+            if (typed.paramsType && typed.paramName) {
+                // Typed request parameter with default expr (nullable)
+                paramsKotlinType = typed.paramsType;
+                paramsSignature = `${typed.paramName}: ${typed.paramsType} = ${typed.defaultExpr ?? "null"}`;
+                paramsVariable = `${typed.paramName}`;
+            } else {
+                // No params for typed endpoint -> pass null so JSON-RPC envelope contains "params": null
+                paramsKotlinType = "kotlin.Nothing?";
+                paramsSignature = "";
+                paramsVariable = "null";
+            }
+        }
 
         clientClassContent += `
     /**

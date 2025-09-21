@@ -37,6 +37,7 @@ See the transport implementation here:
 1) OpenAPI parsing & code generation (TypeScript-based generator)
 - Parse nearcore OpenAPI spec and generate Kotlin models and client methods.
 - Apply snake_case (from API) → camelCase (Kotlin) naming.
+- Subset typed endpoints implemented: status, validators, gas_price.
 - Patch: always POST to the base RPC endpoint path “/” (JSON-RPC 2.0).
 
 2) Two Kotlin packages (Kotlin ecosystem naming)
@@ -126,9 +127,9 @@ fun main() = runBlocking {
     val transport = JsonRpcTransport(http, "https://rpc.testnet.near.org")
     val client = NearRpcClient(transport)
 
-    // Query network status
-    val statusJson = client.status() // JsonElement for now
-    println(statusJson)
+    // Query network status (typed)
+    val status = client.status() // RpcStatusResponse
+    println(status)
 
     http.close()
 }
@@ -142,7 +143,7 @@ data class StatusLike(val chainId: String?)
 ```
 
 Notes:
-- The current client methods return JsonElement for broad compatibility. Generated data classes are available to decode into typed models. Incremental typed wrappers can be introduced per endpoint as needed.
+- Subset endpoints are fully typed today: status, validators, gas_price. Other endpoints may return JsonElement and can be decoded into generated types as needed. Additional typed wrappers will be added incrementally.
 
 --------------------------------------------------------------------------------
 
@@ -176,6 +177,8 @@ Automation:
 --------------------------------------------------------------------------------
 
 ## Testing
+
+- Coverage: enforced ≥80% using Kover for the client module. Coverage for the types module is being added incrementally.
 
 Unit tests (transport logic, serialization):
 ```bash
