@@ -37,7 +37,7 @@ See the transport implementation here:
 1) OpenAPI parsing & code generation (TypeScript-based generator)
 - Parse nearcore OpenAPI spec and generate Kotlin models and client methods.
 - Apply snake_case (from API) → camelCase (Kotlin) naming.
-- Subset typed endpoints implemented: status, validators, gas_price.
+- Typed endpoints (subset, expanding): status, validators, gas_price, query, block, EXPERIMENTAL_tx_status, send_tx, network_info, health.
 - Patch: always POST to the base RPC endpoint path “/” (JSON-RPC 2.0).
 
 2) Two Kotlin packages (Kotlin ecosystem naming)
@@ -178,7 +178,7 @@ Automation:
 
 ## Testing
 
-- Coverage: enforced ≥80% using Kover for the client module. Coverage for the types module is being added incrementally.
+- Coverage: Kover enforces ≥80% on the client module. Generated classes in the types module are excluded from coverage; additional tests will be added progressively.
 
 Unit tests (transport logic, serialization):
 ```bash
