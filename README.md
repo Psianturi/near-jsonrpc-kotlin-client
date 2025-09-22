@@ -110,6 +110,7 @@ dependencies {
 ```
 
 Notes:
+- Version 1.0.0 is available and tested on JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.0.0
 - For snapshots, you may use a branch or commit hash:
   - implementation("com.github.Psianturi:near-jsonrpc-client:master-SNAPSHOT")
   - implementation("com.github.Psianturi:near-jsonrpc-client:<commit-hash>")
