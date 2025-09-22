@@ -9,7 +9,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
-group = "com.github.Psianturi"
+group = "com.github.Psianturi.near-jsonrpc-kotlin-client"
 
 // Version resolution preference (JitPack friendly):
 // 1) -Pversion=1.2.3  (Project property)

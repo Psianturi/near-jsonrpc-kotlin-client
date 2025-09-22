@@ -108,6 +108,39 @@ dependencyResolutionManagement {
 }
 ```
 
+### Option 3: JitPack (Recommended for Production)
+
+Add JitPack repository to `settings.gradle.kts`:
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+Add to `app/build.gradle.kts`:
+```kotlin
+dependencies {
+    // NEAR JSON-RPC Kotlin Client
+    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:1.0.0")
+    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-types:1.0.0")
+
+    // Ktor for HTTP client
+    implementation("io.ktor:ktor-client-okhttp:2.3.4")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
+
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+}
+```
+
+Notes:
+- Version 1.0.0 is available and tested on JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.0.0
+- For snapshots: implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:master-SNAPSHOT")
+
 ## Usage Example
 
 ### ✅ Correct Implementation:

@@ -102,18 +102,18 @@ build.gradle.kts:
 ```kotlin
 dependencies {
     // Primary client (includes dependency on types)
-    implementation("com.github.Psianturi:near-jsonrpc-client:1.0.0")
+    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:1.0.0")
 
     // Optional: access types explicitly (usually not required)
-    // implementation("com.github.Psianturi:near-jsonrpc-types:1.0.0")
+    // implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-types:1.0.0")
 }
 ```
 
 Notes:
 - Version 1.0.0 is available and tested on JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.0.0
 - For snapshots, you may use a branch or commit hash:
-  - implementation("com.github.Psianturi:near-jsonrpc-client:master-SNAPSHOT")
-  - implementation("com.github.Psianturi:near-jsonrpc-client:<commit-hash>")
+  - implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:master-SNAPSHOT")
+  - implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:<commit-hash>")
 - JDK 17+ recommended for builds.
 
 --------------------------------------------------------------------------------
