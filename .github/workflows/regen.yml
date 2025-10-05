@@ -48,7 +48,18 @@ jobs:
           commit_user_name: github-actions[bot]
           commit_user_email: github-actions@github.com
 
-      - name: Create Pull Request
+      - name: Create Pull Request (use PAT when available)
+        if: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          commit-message: "chore(generator): regenerate types and client"
+          branch: regen/codegen-${{ github.run_id }}
+          title: "Regenerate types & client (automated)"
+          body: "Automated regeneration of types and client from OpenAPI spec."
+
+      - name: Create Pull Request (use GITHUB_TOKEN fallback)
+        if: ${{ secrets.PERSONAL_ACCESS_TOKEN == '' }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
