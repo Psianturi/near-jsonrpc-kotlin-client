@@ -1,5 +1,9 @@
 name: OpenAPI Auto-Fetch & Code Generation
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   schedule:
     # Run weekly on Mondays at 09:00 UTC
