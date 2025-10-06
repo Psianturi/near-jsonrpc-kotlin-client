@@ -6,7 +6,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 2 * * 0'   # Mingguan, sesuaikan
+    - cron: '0 2 * * 0'
   workflow_dispatch:
   push:
     paths:
@@ -23,88 +23,71 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node 22
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22.x'
 
       - name: Install generator deps
         working-directory: ./generator
-        run: |
-          npm ci
+        run: npm ci
 
       - name: Run generator
         working-directory: ./generator
+        run: npm run generate
+
+      - name: "Debug: staged files (before commit)"
         run: |
-          npm run generate
+          git status --porcelain || true
+          git diff --name-only --staged || true
 
-      - name: Commit generated changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "chore(generator): regenerate types and client"
-          file_pattern: |
-            packages/types/**
-            packages/client/**
-          branch: regen/codegen-${{ github.run_id }}
-          commit_user_name: github-actions[bot]
-          commit_user_email: github-actions@github.com
-
-      - name: Configure git to use PAT for pushes (if provided)
+      - name: Create branch, commit only generated files, and push
         env:
           PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
+          set -euo pipefail
+          BRANCH=regen/codegen-${{ github.run_id }}
+          git fetch origin
+          git checkout -B $BRANCH
+
+          # Add only generated folders
+          git add packages/types || true
+          git add packages/client || true
+
+          if git diff --staged --quiet; then
+            echo "No generated changes to commit"
+            exit 0
+          fi
+
+          printf "%s\n" "chore(generator): regenerate types and client" > /tmp/commitmsg
+          printf "\nAutomated regeneration of types and client from generator." >> /tmp/commitmsg
+
+          git -c user.name="${GITHUB_ACTOR}" -c user.email="${GITHUB_ACTOR}@users.noreply.github.com" commit -F /tmp/commitmsg || true
+
           if [ -n "$PAT" ]; then
-            echo "Configuring git to use PAT for pushes"
             git config --global url."https://$PAT@github.com/".insteadOf "https://github.com/"
-          else
-            echo "No PERSONAL_ACCESS_TOKEN set; skipping git config"
           fi
 
-      - name: Check PERSONAL_ACCESS_TOKEN present (non-sensitive)
-        env:
-          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          if [ -n "$PAT" ]; then
-            echo "PERSONAL_ACCESS_TOKEN is present in this runner"
-          else
-            echo "PERSONAL_ACCESS_TOKEN is NOT present in this runner"
-          fi
+          echo "--- staged files ---"
+          git status --porcelain || true
+          git diff --staged --name-only || true
+          echo "--- staged diff stat ---"
+          git --no-pager diff --staged --stat || true
 
-      - name: Debug: show git URL rewrite (masked, non-sensitive)
-        run: |
-          echo "Checking for URL rewrite configured for github.com (masked)"
-          git config --global --get-regexp '^url\..*github.com' 2>/dev/null || true
-          git config --global --get-regexp '^url\..*github.com' 2>/dev/null | sed -E 's#https://[^@]*@#https://[redacted]@#' || echo "(no rewrite configured)"
+          git push --force-with-lease origin $BRANCH:refs/heads/$BRANCH
 
-      - name: Remove workflow files from commit (safety)
-        run: |
-          echo "Ensuring .github/workflows/ files are not staged or changed"
-          git restore --staged .github/workflows/ || true
-          git checkout -- .github/workflows/ || true
-          git reset -- .github/workflows/ || true
-
-      - name: Create Pull Request (use PAT)
-        if: env.PERSONAL_ACCESS_TOKEN != ''
-        uses: peter-evans/create-pull-request@v5
+      - name: Create or update Pull Request via API
+        uses: actions/github-script@v6
         with:
-          token: ${{ env.PERSONAL_ACCESS_TOKEN }}
-          commit-message: "chore(generator): regenerate types and client"
-          branch: regen/codegen-${{ github.run_id }}
-          title: "Regenerate types & client (automated)"
-          body: "Automated regeneration of types and client from OpenAPI spec."
-          add-paths: |
-            packages/types/**
-            packages/client/**
-
-      - name: Create Pull Request (fallback: use GITHUB_TOKEN)
-        if: env.PERSONAL_ACCESS_TOKEN == ''
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(generator): regenerate types and client"
-          branch: regen/codegen-${{ github.run_id }}
-          title: "Regenerate types & client (automated)"
-          body: "Automated regeneration of types and client from OpenAPI spec."
-          add-paths: |
-            packages/types/**
-            packages/client/**
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const head = `regen/codegen-${{ github.run_id }}`;
+            const base = context.repo.default_branch || 'master';
+            const prs = await github.rest.pulls.list({ owner, repo, head: `${owner}:${head}`, state: 'open' });
+            if (prs.data.length > 0) {
+              core.info(`PR already exists: ${prs.data[0].html_url}`);
+            } else {
+              const pr = await github.rest.pulls.create({ owner, repo, head, base, title: 'Regenerate types & client (automated)', body: 'Automated regeneration of types and client from OpenAPI spec.' });
+              core.info(`Created PR: ${pr.data.html_url}`);
+            }
