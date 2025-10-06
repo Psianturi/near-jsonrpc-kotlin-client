@@ -36,6 +36,9 @@ jobs:
         working-directory: ./generator
         run: npm run generate
 
+      - name: Grant execute for gradlew
+        run: chmod +x ./gradlew || true
+
       - name: "Debug: staged files (before commit)"
         run: |
           git status --porcelain || true
@@ -49,6 +52,10 @@ jobs:
           BRANCH=regen/codegen-${{ github.run_id }}
           git fetch origin
           git checkout -B $BRANCH
+
+          # Ensure workflow files are not staged/committed (safety)
+          git restore --staged .github/workflows/ || true
+          git checkout -- .github/workflows/ || true
 
           # Add only generated folders
           git add packages/types || true

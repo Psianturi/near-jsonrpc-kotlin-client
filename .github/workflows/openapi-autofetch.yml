@@ -51,6 +51,7 @@ jobs:
         if: steps.check-changes.outputs.openapi_changed == 'true' || github.event.inputs.force_regenerate == 'true'
         run: |
           npm run generate --prefix generator
+          chmod +x ./gradlew || true
           ./gradlew :packages:client:compileKotlinJvm --no-daemon --stacktrace
           ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue
 
@@ -68,6 +69,10 @@ jobs:
           BRANCH=automated/openapi-update
           git fetch origin
           git checkout -B "$BRANCH"
+
+          # Ensure workflow files are not staged/committed (safety)
+          git restore --staged .github/workflows/ || true
+          git checkout -- .github/workflows/ || true
 
           # Stage only generated files
           git add packages/types || true
