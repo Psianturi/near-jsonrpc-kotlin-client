@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: '22.x'
           cache: 'npm'
+          cache-dependency-path: generator/package-lock.json
 
       - name: Install generator deps
         working-directory: ./generator
@@ -48,21 +49,21 @@ jobs:
           commit_user_name: github-actions[bot]
           commit_user_email: github-actions@github.com
 
-      - name: Create Pull Request (use PAT when available)
-        if: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: "chore(generator): regenerate types and client"
-          branch: regen/codegen-${{ github.run_id }}
-          title: "Regenerate types & client (automated)"
-          body: "Automated regeneration of types and client from OpenAPI spec."
+      - name: Configure git to use PAT for pushes (if provided)
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "Configuring git to use PAT for pushes"
+            git config --global url."https://$PAT@github.com/".insteadOf "https://github.com/"
+          else
+            echo "No PERSONAL_ACCESS_TOKEN set; skipping git config"
+          fi
 
-      - name: Create Pull Request (use GITHUB_TOKEN fallback)
-        if: ${{ secrets.PERSONAL_ACCESS_TOKEN == '' }}
+      - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
           commit-message: "chore(generator): regenerate types and client"
           branch: regen/codegen-${{ github.run_id }}
           title: "Regenerate types & client (automated)"

@@ -103,50 +103,21 @@ jobs:
       - name: Run tests on generated code
         run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue
 
-      - name: Create Pull Request (use PAT when available)
-        if: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}
+      - name: Configure git to use PAT for pushes (if provided)
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "Configuring git to use PAT for pushes"
+            git config --global url."https://$PAT@github.com/".insteadOf "https://github.com/"
+          else
+            echo "No PERSONAL_ACCESS_TOKEN set; skipping git config"
+          fi
+
+      - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          commit-message: |
-            🤖 Auto-generated: Update NEAR JSON-RPC client from latest OpenAPI spec
-
-            - Updated OpenAPI specification from nearcore
-            - Regenerated Kotlin types and client code
-            - All tests passing
-          title: '🤖 Auto-generated: Update NEAR JSON-RPC client from latest OpenAPI spec'
-          body: |
-            ## 🤖 Automated Code Generation
-
-            This PR was automatically created by the OpenAPI auto-fetch workflow.
-
-            ### Changes
-            - Updated OpenAPI specification from [nearcore](https://github.com/near/nearcore)
-            - Regenerated Kotlin data types and client methods
-            - All existing tests continue to pass
-
-            ### Verification
-            - ✅ Code compiles successfully
-            - ✅ Unit tests pass
-            - ✅ Integration tests pass (if applicable)
-
-            ### Next Steps
-            Review the generated code changes and merge if everything looks correct.
-
-            ---
-            *This PR was generated automatically. If you notice any issues, please report them in the comments.*
-          branch: automated/openapi-update
-          delete-branch: true
-          labels: |
-            automated
-            dependencies
-            enhancement
-
-      - name: Create Pull Request (use GITHUB_TOKEN fallback)
-        if: ${{ secrets.PERSONAL_ACCESS_TOKEN == '' }}
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
           commit-message: |
             🤖 Auto-generated: Update NEAR JSON-RPC client from latest OpenAPI spec
 
