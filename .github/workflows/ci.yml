@@ -43,11 +43,23 @@ jobs:
       - name: Run unit tests (JVM) - excludes integration
         run: ./gradlew :packages:client:jvmTest --no-daemon --stacktrace --continue || true
 
+      - name: Run types module tests
+        run: ./gradlew :packages:types:jvmTest --no-daemon --stacktrace --continue || true
+
       - name: Build JAR (client)
         run: ./gradlew :packages:client:jvmJar --no-daemon --stacktrace
 
-      - name: Run coverage (Kover) and verify ≥80% (client-only)
-        run: ./gradlew :packages:client:koverXmlReport :packages:client:koverVerify --no-daemon --stacktrace
+      - name: Run coverage (Kover) and verify ≥80% client, ≥50% types
+        run: |
+          ./gradlew :packages:client:koverXmlReport :packages:client:koverVerify --no-daemon --stacktrace
+          ./gradlew :packages:types:koverXmlReport :packages:types:koverVerify --no-daemon --stacktrace
+
+      - name: Run integration tests (testnet - optional, continue on failure)
+        run: ./gradlew :packages:client:jvmTest -Dgroups=integration --no-daemon --stacktrace --continue || echo "Integration tests skipped or failed (optional)"
+        continue-on-error: true
+        env:
+          NEAR_RPC_URL: https://rpc.testnet.near.org
+          NEAR_NETWORK: testnet
 
       - name: Upload coverage report (client module)
         uses: actions/upload-artifact@v4

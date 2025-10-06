@@ -3,7 +3,6 @@ name: OpenAPI Auto-Fetch & Code Generation
 permissions:
   contents: write
   pull-requests: write
-  workflows: write
 
 on:
   schedule:
