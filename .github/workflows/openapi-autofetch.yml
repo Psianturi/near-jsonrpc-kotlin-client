@@ -130,6 +130,13 @@ jobs:
           git config --global --get-regexp '^url\..*github.com' 2>/dev/null || true
           git config --global --get-regexp '^url\..*github.com' 2>/dev/null | sed -E 's#https://[^@]*@#https://[redacted]@#' || echo "(no rewrite configured)"
 
+      - name: Remove workflow files from commit (safety)
+        run: |
+          echo "Ensuring .github/workflows/ files are not staged or changed"
+          git restore --staged .github/workflows/ || true
+          git checkout -- .github/workflows/ || true
+          git reset -- .github/workflows/ || true
+
       - name: Create Pull Request (use PAT)
         if: env.PERSONAL_ACCESS_TOKEN != ''
         uses: peter-evans/create-pull-request@v5
@@ -168,6 +175,10 @@ jobs:
             automated
             dependencies
             enhancement
+          add-paths: |
+            packages/types/**
+            packages/client/**
+            generator/**
 
       - name: Create Pull Request (fallback: use GITHUB_TOKEN)
         if: env.PERSONAL_ACCESS_TOKEN == ''
@@ -207,3 +218,7 @@ jobs:
             automated
             dependencies
             enhancement
+          add-paths: |
+            packages/types/**
+            packages/client/**
+            generator/**
