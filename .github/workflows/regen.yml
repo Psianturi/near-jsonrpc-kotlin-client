@@ -3,7 +3,6 @@ name: Regenerate Types (generator)
 permissions:
   contents: write
   pull-requests: write
-  workflows: write
 
 on:
   schedule:
