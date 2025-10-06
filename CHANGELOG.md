@@ -5,6 +5,14 @@ All notable changes to the NEAR JSON-RPC Kotlin Client will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.0...v1.1.1) (2025-10-06)
+
+
+### Bug Fixes
+
+* make Maven Central publishing optional to prevent CI failures ([5de7386](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/5de738606fadec21704fe4d0ce3796ceaa8ca69b))
+* strip v prefix from release tag for proper package versioning ([1bed642](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/1bed6421efeeaf7ca91e0ff6034e577516a37ecc))
+
 ## [1.1.0](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.0.1...v1.1.0) (2025-10-06)
 
 
