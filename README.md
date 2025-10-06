@@ -30,11 +30,27 @@ The NEAR Protocol exposes a JSON-RPC interface and publishes an OpenAPI spec. Ho
 - Strong testing and CI automation for long-term maintainability
 - Apache-2.0 Licensed public good
 
-Note on OpenAPI vs implementation:
-- The JSON-RPC implementation expects all methods to POST to the same path (“/”), while the OpenAPI lists unique paths per method. The transport intentionally ignores paths and always POSTs to the base RPC URL.
+**Important Note - OpenAPI Path Handling:**
 
-See the transport implementation here:
-- [JsonRpcTransport.call()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt:30)
+The NEAR JSON-RPC implementation follows JSON-RPC 2.0 protocol, which means:
+- ✅ **All methods POST to the same endpoint**: `https://rpc.near.org/` (path: `/`)
+- ⚠️ **OpenAPI spec lists unique paths**: `/status`, `/validators`, `/block`, etc.
+
+**Our Implementation:**
+- The transport **intentionally ignores** OpenAPI paths
+- Always POSTs to the base RPC URL with method name in request body
+- This matches the actual NEAR RPC server behavior
+
+**Example:**
+```kotlin
+// OpenAPI says: POST to /status
+// Reality: POST to / with body: {"method": "status", ...}
+client.post("https://rpc.near.org/") {  // Always "/"
+    setBody("""{"jsonrpc":"2.0","method":"status",...}""")
+}
+```
+
+See implementation: [JsonRpcTransport.kt#L43](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt#L43)
 
 --------------------------------------------------------------------------------
 
