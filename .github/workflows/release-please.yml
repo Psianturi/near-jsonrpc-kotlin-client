@@ -74,7 +74,8 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./gradlew publish --no-daemon --stacktrace
+          # Use the tag name produced by release-please as the version to avoid "unspecified"
+          ./gradlew :packages:types:publish :packages:client:publish -Pversion=${{ needs.release-please.outputs.tag_name }} --no-daemon --stacktrace
 
       - name: Upload JAR artifacts
         uses: actions/upload-artifact@v4

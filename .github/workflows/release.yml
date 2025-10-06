@@ -89,11 +89,12 @@ jobs:
           prerelease: false
 
       - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./gradlew :packages:client:publishToMavenLocal
-          # Note: For publishing to GitHub Packages, you would need:
-          # ./gradlew :packages:client:publish
-          # With proper repository configuration in build.gradle.kts
+          # Use the input version (or tag-derived version) for publication
+          VERSION=${{ steps.changelog.outputs.version }}
+          ./gradlew :packages:types:publish :packages:client:publish -Pversion=${VERSION} --no-daemon --stacktrace
 
       - name: Upload JAR artifacts
         uses: actions/upload-artifact@v4
