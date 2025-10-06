@@ -74,10 +74,13 @@ jobs:
           git restore --staged .github/workflows/ || true
           git checkout -- .github/workflows/ || true
 
-          # Stage only generated files
+          # Stage only generated files (avoid generator/node_modules and other noisy files)
           git add packages/types || true
           git add packages/client || true
-          git add generator || true
+          git add generator/openapi.json || true
+          # Ensure generator/node_modules or other dev artifacts are not staged
+          git restore --staged generator/node_modules || true
+          git rm -r --cached generator/node_modules || true
 
           git status --porcelain
           git diff --name-only --staged || true

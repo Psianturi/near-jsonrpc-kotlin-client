@@ -46,6 +46,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-cio:2.3.4")
                 implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
+                // Ktor mock for JVM unit tests
+                implementation("io.ktor:ktor-client-mock:2.3.4")
             }
         }
     }

@@ -104,59 +104,108 @@ on:
                 git push --force-with-lease origin $BRANCH:refs/heads/$BRANCH
                 echo "changed=true" >> "$GITHUB_OUTPUT"
 
-            - name: Create or update Pull Request via API
-              if: steps.regen.outputs.changed == 'true'
-              uses: actions/github-script@v6
-              with:
-                script: |
-                  const owner = context.repo.owner;
-                  const repo = context.repo.repo;
-                  const head = `regen/codegen-${{ github.run_id }}`;
-                  const base = context.repo.default_branch || 'master';
-                  const prs = await github.rest.pulls.list({ owner, repo, head: `${owner}:${head}`, state: 'open' });
-                  if (prs.data.length > 0) {
-                    core.info(`PR already exists: ${prs.data[0].html_url}`);
-                  } else {
-                    const pr = await github.rest.pulls.create({ owner, repo, head, base, title: 'Regenerate types & client (automated)', body: 'Automated regeneration of types and client from OpenAPI spec.' });
-                    core.info(`Created PR: ${pr.data.html_url}`);
-                  }
-                        if git diff --staged --quiet; then
-                          echo "changed=false" >> "$GITHUB_OUTPUT"
-                          echo "No generated changes to commit"
-                          exit 0
-                        fi
+            name: Regenerate Types (generator)
 
-                        printf "%s\n" "chore(generator): regenerate types and client" > /tmp/commitmsg
-                        printf "\nAutomated regeneration of types and client from generator." >> /tmp/commitmsg
+            permissions:
+              contents: write
+              pull-requests: write
 
-                        git -c user.name="${GITHUB_ACTOR}" -c user.email="${GITHUB_ACTOR}@users.noreply.github.com" commit -F /tmp/commitmsg || true
+            on:
+              schedule:
+                - cron: '0 2 * * 0'
+              workflow_dispatch:
+              push:
+                paths:
+                  - 'generator/**'
 
-                        if [ -n "$PAT" ]; then
-                          git config --global url."https://$PAT@github.com/".insteadOf "https://github.com/"
-                        fi
+            jobs:
+              generate:
+                runs-on: ubuntu-latest
+                env:
+                  PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+                steps:
+                  - name: Checkout
+                    uses: actions/checkout@v4
+                    with:
+                      fetch-depth: 0
 
-                        echo "--- staged files ---"
-                        git status --porcelain || true
-                        git diff --staged --name-only || true
-                        echo "--- staged diff stat ---"
-                        git --no-pager diff --staged --stat || true
+                  - name: Setup Node
+                    uses: actions/setup-node@v4
+                    with:
+                      node-version: '22.x'
 
-                        git push --force-with-lease origin $BRANCH:refs/heads/$BRANCH
-                        echo "changed=true" >> "$GITHUB_OUTPUT"
+                  - name: Install generator deps
+                    working-directory: ./generator
+                    run: npm ci
 
-                    - name: Create or update Pull Request via API
-                      if: steps.regen.outputs.changed == 'true'
-                      uses: actions/github-script@v6
-                      with:
-                        script: |
-                          const owner = context.repo.owner;
-                          const repo = context.repo.repo;
-                          const head = `regen/codegen-${{ github.run_id }}`;
-                          const base = context.repo.default_branch || 'master';
-                          const prs = await github.rest.pulls.list({ owner, repo, head: `${owner}:${head}`, state: 'open' });
-                          if (prs.data.length > 0) {
-                            core.info(`PR already exists: ${prs.data[0].html_url}`);
-                          } else {
-                            const pr = await github.rest.pulls.create({ owner, repo, head, base, title: 'Regenerate types & client (automated)', body: 'Automated regeneration of types and client from OpenAPI spec.' });
-                            core.info(`Created PR: ${pr.data.html_url}`);
-                          }
+                  - name: Run generator
+                    working-directory: ./generator
+                    run: npm run generate
+
+                  - name: Grant execute for gradlew
+                    run: chmod +x ./gradlew || true
+
+                  - name: Debug: staged files (before commit)
+                    run: |
+                      git status --porcelain || true
+                      git diff --name-only --staged || true
+
+                  - name: Create branch, commit only generated files, and push
+                    id: regen
+                    env:
+                      PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+                    run: |
+                      set -euo pipefail
+                      BRANCH=regen/codegen-${{ github.run_id }}
+                      git fetch origin
+                      git checkout -B $BRANCH
+
+                      # Ensure workflow files are not staged/committed (safety)
+                      git restore --staged .github/workflows/ || true
+                      git checkout -- .github/workflows/ || true
+
+                      # Add only generated folders
+                      git add packages/types || true
+                      git add packages/client || true
+
+                      # If there's nothing staged, emit an output and skip the rest
+                      if git diff --staged --quiet; then
+                        echo "changed=false" >> "$GITHUB_OUTPUT"
+                        echo "No generated changes to commit"
+                        exit 0
+                      fi
+
+                      printf "%s\n" "chore(generator): regenerate types and client" > /tmp/commitmsg
+                      printf "\nAutomated regeneration of types and client from generator." >> /tmp/commitmsg
+
+                      git -c user.name="${GITHUB_ACTOR}" -c user.email="${GITHUB_ACTOR}@users.noreply.github.com" commit -F /tmp/commitmsg || true
+
+                      if [ -n "$PAT" ]; then
+                        git config --global url."https://$PAT@github.com/".insteadOf "https://github.com/"
+                      fi
+
+                      echo "--- staged files ---"
+                      git status --porcelain || true
+                      git diff --staged --name-only || true
+                      echo "--- staged diff stat ---"
+                      git --no-pager diff --staged --stat || true
+
+                      git push --force-with-lease origin $BRANCH:refs/heads/$BRANCH
+                      echo "changed=true" >> "$GITHUB_OUTPUT"
+
+                  - name: Create or update Pull Request via API
+                    if: steps.regen.outputs.changed == 'true'
+                    uses: actions/github-script@v6
+                    with:
+                      script: |
+                        const owner = context.repo.owner;
+                        const repo = context.repo.repo;
+                        const head = `regen/codegen-${{ github.run_id }}`;
+                        const base = context.repo.default_branch || 'master';
+                        const prs = await github.rest.pulls.list({ owner, repo, head: `${owner}:${head}`, state: 'open' });
+                        if (prs.data.length > 0) {
+                          core.info(`PR already exists: ${prs.data[0].html_url}`);
+                        } else {
+                          const pr = await github.rest.pulls.create({ owner, repo, head, base, title: 'Regenerate types & client (automated)', body: 'Automated regeneration of types and client from OpenAPI spec.' });
+                          core.info(`Created PR: ${pr.data.html_url}`);
+                        }
