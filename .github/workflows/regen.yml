@@ -1,10 +1,9 @@
 name: Regenerate Types (generator)
 
-name: Regenerate Types (generator)
-
 permissions:
   contents: write
   pull-requests: write
+  workflows: write
 
 on:
   schedule:
@@ -30,7 +29,7 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: Install generator deps
+      - name: Install generator dependencies
         working-directory: ./generator
         run: npm ci
 
@@ -73,7 +72,10 @@ jobs:
 
           echo "chore(generator): regenerate types and client" > /tmp/commitmsg
           echo "Automated regeneration of types and client from generator." >> /tmp/commitmsg
-          git -c user.name="${GITHUB_ACTOR}" -c user.email="${GITHUB_ACTOR}@users.noreply.github.com" commit -F /tmp/commitmsg || true
+
+          git -c user.name="${GITHUB_ACTOR}" \
+              -c user.email="${GITHUB_ACTOR}@users.noreply.github.com" \
+              commit -F /tmp/commitmsg || true
 
           # Use PAT for push
           if [ -n "$PAT" ]; then
@@ -119,4 +121,3 @@ jobs:
               });
               core.info(`Created PR: ${pr.data.html_url}`);
             }
-        with:

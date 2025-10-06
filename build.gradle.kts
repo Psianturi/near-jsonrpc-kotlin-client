@@ -9,7 +9,8 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
-group = "com.github.Psianturi.near-jsonrpc-kotlin-client"
+// Default group for published artifacts; overrideable via -Pgroup or env if needed
+group = (findProperty("group") as String?) ?: System.getenv("GROUP") ?: "io.near"
 
 // Version resolution preference (JitPack friendly):
 // 1) -Pversion=1.2.3  (Project property)
@@ -20,7 +21,8 @@ val resolvedFromProps: String? = (findProperty("version") as String?)
     ?: (findProperty("releaseVersion") as String?)
 val resolvedFromEnv: String? = System.getenv("VERSION")
     ?: System.getenv("RELEASE_VERSION")
-version = resolvedFromProps ?: resolvedFromEnv ?: "0.1.0-SNAPSHOT"
+// Prefer explicit version from CLI or CI env, otherwise fall back to a stable default
+version = resolvedFromProps ?: resolvedFromEnv ?: "0.1.0"
 
 // Global Kover report and verification settings
 koverReport {
