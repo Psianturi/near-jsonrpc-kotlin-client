@@ -5,6 +5,14 @@ All notable changes to the NEAR JSON-RPC Kotlin Client will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.1...v1.1.2) (2025-10-06)
+
+
+### Bug Fixes
+
+* remove invalid workflows permission from regen workflow ([a1b4e02](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/a1b4e02ccc3d2e7b895f80a179e1ea3bcd861ee7))
+* resolve publication conflicts by removing duplicate jvm publication ([fae0750](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/fae0750c3299e8f59cda2449382cc661152e3b05))
+
 ## [1.1.1](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.0...v1.1.1) (2025-10-06)
 
 
