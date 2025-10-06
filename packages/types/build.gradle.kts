@@ -8,7 +8,11 @@ plugins {
 }
 
 kotlin {
-   jvm()
+   jvm {
+       // Disable automatic publication of JVM-only artifacts
+       // We only want kotlinMultiplatform publication
+       withJava()
+   }
    // JS target temporarily disabled to ensure root builds/tests don't require Node/Yarn locally.
    // Re-enable when JS coverage is needed:
    // js(IR) {
@@ -36,15 +40,12 @@ kotlin {
 
 publishing {
    publications {
-       // Configure all publications with consistent artifact ID
-       publications.withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
+       // Configure all publications with same artifactId
+       withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
            artifactId = "near-jsonrpc-types"
        }
-       
-       // Remove JVM-only publication to avoid conflict with kotlinMultiplatform
-       // Only publish kotlinMultiplatform which includes JVM target
-       remove(findByName("jvm"))
    }
+   
    repositories {
        maven {
            name = "GitHubPackages"
@@ -55,6 +56,13 @@ publishing {
            }
        }
    }
+}
+
+// Disable jvm-only publication to avoid conflict with kotlinMultiplatform
+afterEvaluate {
+    tasks.named("publishJvmPublicationToGitHubPackagesRepository") {
+        enabled = false
+    }
 }
 
 koverReport {

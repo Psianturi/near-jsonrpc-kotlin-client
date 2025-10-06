@@ -6,7 +6,10 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm {
+        // Disable automatic publication of JVM-only artifacts
+        withJava()
+    }
     // Temporarily disabled JS target to avoid Node.js dependency issues
     // js(IR) {
     //     browser()
@@ -66,15 +69,12 @@ kotlin {
 
 publishing {
     publications {
-        // Configure all publications with consistent artifact ID
-        publications.withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
+        // Configure all publications with same artifactId
+        withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
             artifactId = "near-jsonrpc-client"
         }
-        
-        // Remove JVM-only publication to avoid conflict with kotlinMultiplatform
-        // Only publish kotlinMultiplatform which includes JVM target
-        remove(findByName("jvm"))
     }
+    
     repositories {
         maven {
             name = "GitHubPackages"
@@ -84,6 +84,13 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN") ?: (findProperty("gpr.key") as String? ?: "")
             }
         }
+    }
+}
+
+// Disable jvm-only publication to avoid conflict with kotlinMultiplatform
+afterEvaluate {
+    tasks.named("publishJvmPublicationToGitHubPackagesRepository") {
+        enabled = false
     }
 }
 
