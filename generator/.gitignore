@@ -1,0 +1,12 @@
+# Ignore node modules and generated artifacts
+node_modules/
+dist/
+build/
+.npm/
+.yarn/
+package-lock.json
+.pnp.cjs
+.pnp.js
+.idea/
+.vscode/
+.DS_Store
