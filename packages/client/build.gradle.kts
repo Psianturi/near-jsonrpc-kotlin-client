@@ -66,9 +66,14 @@ kotlin {
 
 publishing {
     publications {
+        // Configure all publications with consistent artifact ID
         publications.withType<org.gradle.api.publish.maven.MavenPublication>().configureEach {
             artifactId = "near-jsonrpc-client"
         }
+        
+        // Remove JVM-only publication to avoid conflict with kotlinMultiplatform
+        // Only publish kotlinMultiplatform which includes JVM target
+        remove(findByName("jvm"))
     }
     repositories {
         maven {
