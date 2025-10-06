@@ -15,6 +15,8 @@ on:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    env:
+      PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,10 +62,21 @@ jobs:
             echo "No PERSONAL_ACCESS_TOKEN set; skipping git config"
           fi
 
-      - name: Create Pull Request
+      - name: Check PERSONAL_ACCESS_TOKEN present (non-sensitive)
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "PERSONAL_ACCESS_TOKEN is present in this runner"
+          else
+            echo "PERSONAL_ACCESS_TOKEN is NOT present in this runner"
+          fi
+
+      - name: Create Pull Request (use PAT when available)
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          # Use PAT explicitly when the secret is available; otherwise fall back to GITHUB_TOKEN
+          token: ${{ env.PERSONAL_ACCESS_TOKEN != '' && env.PERSONAL_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
           commit-message: "chore(generator): regenerate types and client"
           branch: regen/codegen-${{ github.run_id }}
           title: "Regenerate types & client (automated)"
