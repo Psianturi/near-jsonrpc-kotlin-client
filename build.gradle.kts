@@ -62,16 +62,25 @@ subprojects {
     
     configure<PublishingExtension> {
         repositories {
-            maven {
-                name = "OSSRH"
-                val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                
-                credentials {
-                    username = rootProject.ext["ossrhUsername"] as String
-                    password = rootProject.ext["ossrhPassword"] as String
+            // Maven Central (OSSRH) - only enabled if credentials are provided
+            val ossrhUser = rootProject.ext["ossrhUsername"] as String
+            val ossrhPass = rootProject.ext["ossrhPassword"] as String
+            
+            if (ossrhUser.isNotEmpty() && ossrhPass.isNotEmpty()) {
+                maven {
+                    name = "OSSRH"
+                    val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
+                    
+                    credentials {
+                        username = ossrhUser
+                        password = ossrhPass
+                    }
                 }
+                println("✅ Maven Central (OSSRH) publishing enabled")
+            } else {
+                println("⏭️ Maven Central (OSSRH) publishing skipped (no credentials)")
             }
         }
         
@@ -112,6 +121,9 @@ subprojects {
         if (signingKey.isNotEmpty() && signingPassword.isNotEmpty()) {
             useInMemoryPgpKeys(signingKey, signingPassword)
             sign(the<PublishingExtension>().publications)
+            println("✅ Artifact signing enabled")
+        } else {
+            println("⏭️ Artifact signing skipped (no signing key)")
         }
     }
 }
