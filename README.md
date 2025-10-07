@@ -1,6 +1,6 @@
 # NEAR JSON-RPC Kotlin Client
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.20-blue.svg)](https://kotlinlang.org)
+[![](https://jitpack.io/v/Psianturi/near-jsonrpc-kotlin-client.svg)](https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client)
 [![CI](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/ci.yml)
 [![Integration Tests](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/integration.yml)
 [![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml)
@@ -286,7 +286,6 @@ Automation:
 **Coverage Metrics:**
 - ✅ Client module: ≥80% enforced via Kover in CI
 - ✅ Types module: Tests included (generated code)
-- ✅ Overall: 90%+ coverage achieved
 - ✅ CI fails if coverage drops below threshold
 
 **Evidence:**

@@ -22,9 +22,9 @@ This project follows a code of conduct to ensure a welcoming environment for all
 ### Prerequisites
 
 - **JDK 17 or higher**
-- **Kotlin 1.9.0 or higher**
-- **Gradle 8.0 or higher**
-- **Node.js 18+** (for code generation)
+- **Kotlin 1.9.20+** (via Gradle wrapper - auto-configured)
+- **Gradle 8.3** (via Gradle wrapper - no manual install needed)
+- **Node.js 22+** (only for code generation)
 - **IntelliJ IDEA** or **Android Studio** (recommended)
 
 ### Setup
@@ -84,8 +84,11 @@ git checkout -b fix/issue-number-description
 # Run specific test class
 ./gradlew :packages:client:jvmTest --tests "*TestClassName*"
 
-# Run with coverage
-./gradlew test jacocoTestReport
+# Generate coverage reports (Kover)
+./gradlew koverXmlReport
+
+# Verify coverage thresholds
+./gradlew koverVerify
 ```
 
 ### 5. Update Documentation

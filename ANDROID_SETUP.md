@@ -124,8 +124,8 @@ Add to `app/build.gradle.kts`:
 ```kotlin
 dependencies {
     // NEAR JSON-RPC Kotlin Client
-    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:1.0.0")
-    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-types:1.0.0")
+    implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:1.1.3")
+    // Types included transitively, no need to add separately
 
     // Ktor for HTTP client
     implementation("io.ktor:ktor-client-okhttp:2.3.4")
@@ -138,8 +138,8 @@ dependencies {
 ```
 
 Notes:
-- Version 1.0.0 is available and tested on JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.0.0
-- For snapshots: implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:master-SNAPSHOT")
+- Latest: 1.1.3 - https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.1.3
+- Snapshots: implementation("com.github.Psianturi.near-jsonrpc-kotlin-client:near-jsonrpc-client:master-SNAPSHOT")
 
 ## Usage Example
 
