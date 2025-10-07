@@ -90,17 +90,25 @@ See implementation: [JsonRpcTransport.kt#L43](packages/client/src/commonMain/kot
 
 ## Architecture Overview
 
-- Transport layer: posts JSON-RPC requests to a base URL (ignores per-method paths).
-  - [JsonRpcTransport.call()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt:30)
-- Client layer: convenience wrapper for all NEAR endpoints.
-  - Example endpoint method: [NearRpcClient.status()](packages/client/src/commonMain/kotlin/com/near/jsonrpc/client/NearRpcClient.kt:226)
-- Types layer: generated data classes with kotlinx.serialization.
+**Three-Layer Design:**
 
-Modules and key files:
-- near-jsonrpc-types
-  - Gradle: [packages/types/build.gradle.kts](packages/types/build.gradle.kts)
-- near-jsonrpc-client
-  - Gradle: [packages/client/build.gradle.kts](packages/client/build.gradle.kts)
+1. **Transport Layer** - HTTP communication & JSON-RPC protocol
+   - File: [JsonRpcTransport.kt](packages/client/src/commonMain/kotlin/com/near/jsonrpc/JsonRpcTransport.kt#L30)
+   - Function: `call<P, R>(method, params)` - Generic RPC call handler
+   - Handles: Request building, POST to "/", response parsing, error handling
+
+2. **Client Layer** - Convenience wrappers for all NEAR endpoints
+   - File: [NearRpcClient.kt](packages/client/src/commonMain/kotlin/com/near/jsonrpc/client/NearRpcClient.kt)
+   - Example: `status()` [line 226](packages/client/src/commonMain/kotlin/com/near/jsonrpc/client/NearRpcClient.kt#L226)
+   - Provides: Type-safe methods for each RPC endpoint
+
+3. **Types Layer** - Generated data classes
+   - Directory: [packages/types/src/.../types/](packages/types/src/commonMain/kotlin/com/near/jsonrpc/types/)
+   - Contains: 140+ generated Kotlin data classes with kotlinx.serialization
+
+**Module Configuration:**
+- Types: [build.gradle.kts](packages/types/build.gradle.kts) - Lightweight, minimal deps
+- Client: [build.gradle.kts](packages/client/build.gradle.kts) - Depends on types + Ktor
 
 --------------------------------------------------------------------------------
 
@@ -198,18 +206,28 @@ import kotlinx.serialization.json.Json
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
+    // Create HTTP client with JSON support
     val http = HttpClient(CIO) {
-        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+        install(ContentNegotiation) {
+            json(Json { ignoreUnknownKeys = true })
+        }
     }
 
-    // Transport posts JSON-RPC envelopes to the base RPC URL ("/")
+    // Create transport that POSTs JSON-RPC to base URL
     val transport = JsonRpcTransport(http, "https://rpc.testnet.near.org")
+    
+    // Create NEAR RPC client
     val client = NearRpcClient(transport)
 
-    // Query network status (typed)
-    val status = client.status() // RpcStatusResponse
-    println(status)
+    // Query network status
+    val status = client.status() // Returns JsonElement
+    println("NEAR Status: $status")
+    
+    // Query validators
+    val validators = client.validators() // Returns JsonElement
+    println("Validators: $validators")
 
+    // Clean up
     http.close()
 }
 ```
