@@ -15,6 +15,25 @@ import org.junit.jupiter.api.Tag
 @Tag("integration")
 class NearRpcClientIntegrationTest {
 
+    companion object {
+        // Determine RPC URL based on environment variable
+        // Falls back to testnet if not specified (backward compatible)
+        private val network = System.getenv("NEAR_NETWORK") ?: "testnet"
+        
+        private val rpcUrl = when(network.lowercase()) {
+            "mainnet" -> "https://rpc.mainnet.near.org"
+            "testnet" -> "https://rpc.testnet.near.org"
+            else -> {
+                println("Unknown network '$network', defaulting to testnet")
+                "https://rpc.testnet.near.org"
+            }
+        }
+        
+        init {
+            println("Integration tests will run against: $network ($rpcUrl)")
+        }
+    }
+
     private val transport = JsonRpcTransport(
         client = HttpClient(CIO) {
             install(ContentNegotiation) {
@@ -24,17 +43,17 @@ class NearRpcClientIntegrationTest {
                 })
             }
         },
-        rpcUrl = "https://rpc.testnet.near.org"
+        rpcUrl = rpcUrl  // ← Now dynamic based on NEAR_NETWORK env
     )
 
     private val client = NearRpcClient(transport)
 
     @Test
     fun testStatusCall() = runBlocking {
-        println("Testing status() call to NEAR testnet...")
+        println("Testing status() call to NEAR $network...")
 
         val result = client.status()
-        println("Status result: $result")
+        println("Status result for $network: $result")
 
         assertNotNull(result)
         assertTrue(result.toString().contains("chain_id"), "Response should contain chain_id")

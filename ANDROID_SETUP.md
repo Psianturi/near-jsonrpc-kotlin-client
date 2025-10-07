@@ -1,5 +1,32 @@
 # Android Integration Guide
 
+## 📱 Complete Example Application
+
+**A full-featured Android application demonstrating this library is available at:**
+🔗 **[https://github.com/Psianturi/near-kotlin](https://github.com/Psianturi/near-kotlin)**
+
+### Example App Features:
+- ✅ **MVVM Architecture** - Proper ViewModel with StateFlow
+- ✅ **15+ RPC Endpoints** - Network info, status, blocks, validators, etc.
+- ✅ **Wallet Integration** - NEAR Wallet connection via Custom Tabs
+- ✅ **Contract Interaction** - View method calls with parameters
+- ✅ **Account Queries** - Query any NEAR account information
+- ✅ **Error Handling** - Comprehensive error types and user feedback
+- ✅ **Modern UI** - Jetpack Compose with Material 3
+- ✅ **Production Ready** - Complete with tests and documentation
+
+### Quick Start with Example App:
+```bash
+# Clone the example app
+git clone https://github.com/Psianturi/near-kotlin
+cd near-kotlin
+
+# Open in Android Studio and run
+# The app includes comprehensive usage examples
+```
+
+---
+
 ## Package Names
 
 The library uses the following package structure:

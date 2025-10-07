@@ -6,7 +6,7 @@
 [![Code Quality](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml/badge.svg)](https://github.com/Psianturi/near-jsonrpc-kotlin-client/actions/workflows/lint.yml)
 
 **🎯 Quality Highlights:**
-- **90%+ Test Coverage** - CI-enforced
+- **High Test Coverage (≥80%)** - CI-enforced on every build
 - **Contract Validation** - Verifies against real NEAR RPC response structures
 - **19 Typed Endpoints** - Compile-time safety for core RPC methods
 - **Multiple Publishing** - JitPack (easy) + GitHub Packages + Maven Central ready
