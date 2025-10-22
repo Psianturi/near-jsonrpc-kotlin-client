@@ -5,6 +5,13 @@ All notable changes to the NEAR JSON-RPC Kotlin Client will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.3...v1.1.4) (2025-10-22)
+
+
+### Bug Fixes
+
+* support mainnet/testnet in integration tests and update docs ([54df3d3](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/54df3d3cb6252b86f24926816407d34a2c47a5fa))
+
 ## [1.1.3](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.2...v1.1.3) (2025-10-06)
 
 
