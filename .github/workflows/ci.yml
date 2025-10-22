@@ -70,7 +70,17 @@ jobs:
           if-no-files-found: warn
 
       - name: Run lint (detekt) - optional
-        run: ./gradlew detekt --no-daemon --stacktrace --continue || echo "Detekt completed with warnings"
+        run: |
+          if ./gradlew tasks --all | grep -q " detekt"; then
+            ./gradlew detekt --no-daemon --stacktrace --continue || echo "Detekt completed with warnings"
+          else
+            echo "detekt task not available, skipping"
+          fi
 
       - name: Run code style (ktlint) - optional
-        run: ./gradlew ktlintCheck --no-daemon --stacktrace --continue || echo "Ktlint completed with warnings"
+        run: |
+          if ./gradlew tasks --all | grep -q " ktlintCheck"; then
+            ./gradlew ktlintCheck --no-daemon --stacktrace --continue || echo "Ktlint completed with warnings"
+          else
+            echo "ktlintCheck task not available, skipping"
+          fi

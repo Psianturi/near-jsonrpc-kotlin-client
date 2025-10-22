@@ -37,11 +37,21 @@ jobs:
         with:
           gradle-version: 8.3
 
-      - name: Run Kotlin Linting (detekt)
-        run: ./gradlew detekt --no-daemon --stacktrace --continue || echo "Detekt completed with warnings"
+      - name: Run Kotlin Linting (detekt) if available
+        run: |
+          if ./gradlew tasks --all | grep -q " detekt"; then
+            ./gradlew detekt --no-daemon --stacktrace --continue || echo "Detekt completed with warnings"
+          else
+            echo "detekt task not available, skipping"
+          fi
 
-      - name: Run Kotlin Code Style (ktlint)
-        run: ./gradlew ktlintCheck --no-daemon --stacktrace --continue || echo "Ktlint completed with warnings"
+      - name: Run Kotlin Code Style (ktlint) if available
+        run: |
+          if ./gradlew tasks --all | grep -q " ktlintCheck"; then
+            ./gradlew ktlintCheck --no-daemon --stacktrace --continue || echo "Ktlint completed with warnings"
+          else
+            echo "ktlintCheck task not available, skipping"
+          fi
 
 
       - name: Upload detekt reports

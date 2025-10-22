@@ -33,7 +33,7 @@ jobs:
           gradle-version: 8.3
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: kotlin
 
@@ -41,10 +41,10 @@ jobs:
         run: ./gradlew :packages:client:compileKotlinJvm --no-daemon --stacktrace
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:kotlin"
 
