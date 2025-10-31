@@ -5,6 +5,14 @@ All notable changes to the NEAR JSON-RPC Kotlin Client will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v2.0.0...v2.1.0) (2025-10-31)
+
+
+### Features
+
+* Auto-detect required parameters from OpenAPI spec ([87c5e71](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/87c5e71e97d88fba45fa90d96daef3d5e5e1e901))
+* **generator:** Add logging for total client endpoints count ([0fbb571](https://github.com/Psianturi/near-jsonrpc-kotlin-client/commit/0fbb571470a45407c1e3780f536ca39935a82cca))
+
 ## [2.0.0](https://github.com/Psianturi/near-jsonrpc-kotlin-client/compare/v1.1.4...v2.0.0) (2025-10-31)
 
 
