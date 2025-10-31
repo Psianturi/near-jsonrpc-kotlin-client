@@ -214,6 +214,11 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
 
         const functionName = toCamelCase(rpcMethodName);
 
+        // Check if this endpoint requires parameters based on OpenAPI spec
+        const requestBody = operation.requestBody as any;
+        const hasRequiredParams = requestBody?.required === true ||
+            (requestBody?.content?.['application/json']?.schema?.required?.length > 0);
+
         // Defaults (backward compatible): untyped params/result
         let paramsKotlinType: string | null = "kotlinx.serialization.json.JsonObject";
         let paramsSignature = "";
@@ -237,6 +242,10 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
                 paramsSignature = "";
                 paramsVariable = "null";
             }
+        } else if (hasRequiredParams) {
+            // Auto-detect required parameters from OpenAPI spec
+            paramsSignature = `params: kotlinx.serialization.json.JsonObject`;
+            paramsVariable = `params`;
         }
 
         clientClassContent += `

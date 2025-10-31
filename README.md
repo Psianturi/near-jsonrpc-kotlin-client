@@ -170,12 +170,12 @@ dependencies {
 ### Version Notes:
 
 **Latest Versions:**
-- **2.0.0** - Latest stable with parameter support and convenience methods ✅
+- **2.0.0** - Latest stable with auto-detected parameters and convenience methods ✅
   - JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v2.0.0
   - GitHub Packages: Available for both modules
-  - **Fixed**: All client methods now accept proper input parameters
-  - **Added**: Convenience methods for common operations (block(), gasPrice(), queryAccount(), etc.)
-  - **Breaking Change**: Client methods now require appropriate parameters (makes client actually useful!)
+  - **Fixed**: Generator auto-detects required parameters from OpenAPI spec
+  - **Added**: 19 typed endpoints + auto-parameter detection for remaining methods
+  - **Breaking Change**: Methods requiring parameters now properly typed (client fully functional)
 - **1.1.0** - Previous stable
 - **1.0.0** - Initial release
 
