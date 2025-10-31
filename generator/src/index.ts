@@ -185,10 +185,19 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
          "EXPERIMENTAL_validators_ordered": { paramsType: "RpcValidatorsOrderedRequest?", returnType: "JsonElement", paramName: "request", defaultExpr: "null" }
      };
      
+     const paths = spec.paths;
+
      console.log(`\n📊 Typed endpoints configured: ${Object.keys(typedEndpoints).length} methods`);
      console.log(`   Typed: ${Object.keys(typedEndpoints).join(', ')}`);
 
-     const paths = spec.paths;
+     // Count total client endpoints from OpenAPI spec
+     let totalClientEndpoints = 0;
+     for (const path in paths) {
+         if (paths[path].post) {
+             totalClientEndpoints++;
+         }
+     }
+     console.log(`   Total client endpoints available: ${totalClientEndpoints}`);
     for (const path in paths) {
         const pathItem = paths[path];
         if (!pathItem.post) {
