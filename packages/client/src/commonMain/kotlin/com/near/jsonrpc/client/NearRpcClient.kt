@@ -15,15 +15,15 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * [Deprecated] Returns changes for a given account, contract or contract code for given block height or hash. Consider using changes instead.
       */
-    suspend fun EXPERIMENTALChanges(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_changes", buildJsonObject {})
+    suspend fun EXPERIMENTALChanges(params: kotlinx.serialization.json.JsonObject): RpcStateChangesInBlockByTypeResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcStateChangesInBlockByTypeResponse>("EXPERIMENTAL_changes", params)
     }
 
     /**
       * [Deprecated] Returns changes in block for given block height or hash over all transactions for all the types. Includes changes like account_touched, access_key_touched, data_touched, contract_code_touched. Consider using block_effects instead
       */
-    suspend fun EXPERIMENTALChangesInBlock(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_changes_in_block", buildJsonObject {})
+    suspend fun EXPERIMENTALChangesInBlock(params: kotlinx.serialization.json.JsonObject): RpcStateChangesInBlockResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcStateChangesInBlockResponse>("EXPERIMENTAL_changes_in_block", params)
     }
 
     /**
@@ -50,8 +50,8 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Returns the proofs for a transaction execution.
       */
-    suspend fun EXPERIMENTALLightClientProof(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_light_client_proof", buildJsonObject {})
+    suspend fun EXPERIMENTALLightClientProof(request: RpcLightClientExecutionProofRequest): RpcLightClientExecutionProofResponse {
+        return transport.call<RpcLightClientExecutionProofRequest, RpcLightClientExecutionProofResponse>("EXPERIMENTAL_light_client_proof", request)
     }
 
     /**
@@ -64,15 +64,22 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * A configuration that defines the protocol-level parameters such as gas/storage costs, limits, feature flags, other settings
       */
-    suspend fun EXPERIMENTALProtocolConfig(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_protocol_config", buildJsonObject {})
+    suspend fun EXPERIMENTALProtocolConfig(params: kotlinx.serialization.json.JsonObject? = null): RpcProtocolConfigResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject?, RpcProtocolConfigResponse>("EXPERIMENTAL_protocol_config", params)
+    }
+
+    /**
+      * Get current protocol configuration (convenience method)
+      */
+    suspend fun EXPERIMENTALProtocolConfig(): RpcProtocolConfigResponse {
+        return EXPERIMENTALProtocolConfig(null)
     }
 
     /**
       * Fetches a receipt by its ID (as is, without a status or execution outcome)
       */
-    suspend fun EXPERIMENTALReceipt(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_receipt", buildJsonObject {})
+    suspend fun EXPERIMENTALReceipt(request: RpcReceiptRequest): RpcReceiptResponse {
+        return transport.call<RpcReceiptRequest, RpcReceiptResponse>("EXPERIMENTAL_receipt", request)
     }
 
     /**
@@ -85,22 +92,49 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Queries status of a transaction by hash, returning the final transaction result and details of all receipts.
       */
-    suspend fun EXPERIMENTALTxStatus(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_tx_status", buildJsonObject {})
+    suspend fun EXPERIMENTALTxStatus(request: RpcTransactionStatusRequest): RpcTransactionResponse {
+        return transport.call<RpcTransactionStatusRequest, RpcTransactionResponse>("EXPERIMENTAL_tx_status", request)
     }
 
     /**
       * Returns the current epoch validators ordered in the block producer order with repetition. This endpoint is solely used for bridge currently and is not intended for other external use cases.
       */
-    suspend fun EXPERIMENTALValidatorsOrdered(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("EXPERIMENTAL_validators_ordered", buildJsonObject {})
+    suspend fun EXPERIMENTALValidatorsOrdered(request: RpcValidatorsOrderedRequest? = null): RpcValidatorResponse {
+        return transport.call<RpcValidatorsOrderedRequest?, RpcValidatorResponse>("EXPERIMENTAL_validators_ordered", request)
+    }
+
+    /**
+      * Get current epoch validators ordered (convenience method)
+      */
+    suspend fun EXPERIMENTALValidatorsOrdered(): RpcValidatorResponse {
+        return EXPERIMENTALValidatorsOrdered(null)
     }
 
     /**
       * Returns block details for given height or hash
       */
-    suspend fun block(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("block", buildJsonObject {})
+    suspend fun block(request: kotlinx.serialization.json.JsonObject): RpcBlockResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcBlockResponse>("block", request)
+    }
+
+    /**
+      * Returns block details for given height or hash (convenience method)
+      */
+    suspend fun block(blockId: String): RpcBlockResponse {
+        val request = kotlinx.serialization.json.buildJsonObject {
+            put("block_id", kotlinx.serialization.json.JsonPrimitive(blockId))
+        }
+        return block(request)
+    }
+
+    /**
+      * Returns block details for final block (convenience method)
+      */
+    suspend fun block(): RpcBlockResponse {
+        val request = kotlinx.serialization.json.buildJsonObject {
+            put("finality", kotlinx.serialization.json.JsonPrimitive("final"))
+        }
+        return block(request)
     }
 
     /**
@@ -134,8 +168,8 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Returns details of a specific chunk. You can run a block details query to get a valid chunk hash.
       */
-    suspend fun chunk(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("chunk", buildJsonObject {})
+    suspend fun chunk(request: kotlinx.serialization.json.JsonObject): RpcChunkResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcChunkResponse>("chunk", request)
     }
 
     /**
@@ -148,8 +182,15 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Returns gas price for a specific block_height or block_hash. Using [null] will return the most recent block's gas price.
       */
-    suspend fun gasPrice(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("gas_price", buildJsonObject {})
+    suspend fun gasPrice(request: RpcGasPriceRequest? = null): RpcGasPriceResponse {
+        return transport.call<RpcGasPriceRequest?, RpcGasPriceResponse>("gas_price", request)
+    }
+
+    /**
+      * Returns gas price for latest block (convenience method)
+      */
+    suspend fun gasPrice(): RpcGasPriceResponse {
+        return gasPrice(null)
     }
 
     /**
@@ -190,17 +231,17 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Returns the next light client block.
       */
-    suspend fun nextLightClientBlock(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("next_light_client_block", buildJsonObject {})
+    suspend fun nextLightClientBlock(request: RpcLightClientNextBlockRequest): RpcLightClientNextBlockResponse {
+        return transport.call<RpcLightClientNextBlockRequest, RpcLightClientNextBlockResponse>("next_light_client_block", request)
     }
 
     /**
       * This module allows you to make generic requests to the network.
-     * 
+     *
      * The `RpcQueryRequest` struct takes in a [`BlockReference`](https://docs.rs/near-primitives/0.12.0/near_primitives/types/enum.BlockReference.html) and a [`QueryRequest`](https://docs.rs/near-primitives/0.12.0/near_primitives/views/enum.QueryRequest.html).
-     * 
+     *
      * The `BlockReference` enum allows you to specify a block by `Finality`, `BlockId` or `SyncCheckpoint`.
-     * 
+     *
      * The `QueryRequest` enum provides multiple variants for performing the following actions:
      *  - View an account's details
      *  - View a contract's code
@@ -209,15 +250,39 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
      *  - View the `AccessKeyList` of an account
      *  - Call a function in a contract deployed on the network.
       */
-    suspend fun query(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("query", buildJsonObject {})
+    suspend fun query(request: kotlinx.serialization.json.JsonObject): RpcQueryResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcQueryResponse>("query", request)
+    }
+
+    /**
+      * Query account details (convenience method)
+      */
+    suspend fun queryAccount(accountId: String, finality: String = "final"): RpcQueryResponse {
+        val request = kotlinx.serialization.json.buildJsonObject {
+            put("request_type", kotlinx.serialization.json.JsonPrimitive("view_account"))
+            put("finality", kotlinx.serialization.json.JsonPrimitive(finality))
+            put("account_id", kotlinx.serialization.json.JsonPrimitive(accountId))
+        }
+        return query(request)
+    }
+
+    /**
+      * Query contract code (convenience method)
+      */
+    suspend fun queryCode(accountId: String, finality: String = "final"): RpcQueryResponse {
+        val request = kotlinx.serialization.json.buildJsonObject {
+            put("request_type", kotlinx.serialization.json.JsonPrimitive("view_code"))
+            put("finality", kotlinx.serialization.json.JsonPrimitive(finality))
+            put("account_id", kotlinx.serialization.json.JsonPrimitive(accountId))
+        }
+        return query(request)
     }
 
     /**
       * Sends transaction. Returns the guaranteed execution status and the results the blockchain can provide at the moment.
       */
-    suspend fun sendTx(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("send_tx", buildJsonObject {})
+    suspend fun sendTx(transaction: kotlinx.serialization.json.JsonObject): JsonElement {
+        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("send_tx", transaction)
     }
 
     /**
@@ -230,8 +295,8 @@ class NearRpcClient(private val transport: JsonRpcTransport) {
     /**
       * Queries status of a transaction by hash and returns the final transaction result.
       */
-    suspend fun tx(): JsonElement {
-        return transport.call<kotlinx.serialization.json.JsonObject, JsonElement>("tx", buildJsonObject {})
+    suspend fun tx(request: kotlinx.serialization.json.JsonObject): RpcTransactionResponse {
+        return transport.call<kotlinx.serialization.json.JsonObject, RpcTransactionResponse>("tx", request)
     }
 
     /**

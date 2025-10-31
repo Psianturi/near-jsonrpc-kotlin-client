@@ -66,7 +66,10 @@ class NearRpcClientIntegrationTest {
         println("Testing block() call to NEAR testnet...")
 
         try {
-            val result = client.block()
+            val request = kotlinx.serialization.json.buildJsonObject {
+                put("block_id", kotlinx.serialization.json.JsonPrimitive("final"))
+            }
+            val result = client.block(request)
             println("Block result: $result")
 
             assertNotNull(result)
@@ -83,7 +86,7 @@ class NearRpcClientIntegrationTest {
     fun testGasPriceCall() = runBlocking {
         println("Testing gasPrice() call to NEAR testnet...")
 
-        val result = client.gasPrice()
+        val result = client.gasPrice(null) // Pass null for latest block
         println("Gas price result: $result")
 
         assertNotNull(result)
@@ -95,7 +98,7 @@ class NearRpcClientIntegrationTest {
         println("Testing validators() call to NEAR testnet...")
 
         try {
-            val result = client.validators()
+            val result = client.validators() // This method doesn't require parameters
             println("Validators result: $result")
 
             assertNotNull(result)

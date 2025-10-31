@@ -156,31 +156,31 @@ class NearRpcException(message: String, val error: JsonRpcError) : RuntimeExcept
          "validators": { returnType: "RpcValidatorResponse" },
          "network_info": { returnType: "RpcNetworkInfoResponse" },
          "health": { returnType: "JsonElement" },  // Health returns simple OK or error
-         
+
          // Query & Block Methods (with params)
          "gas_price": { paramsType: "RpcGasPriceRequest?", returnType: "RpcGasPriceResponse", paramName: "request", defaultExpr: "null" },
-         "block": { paramsType: "kotlinx.serialization.json.JsonObject?", returnType: "RpcBlockResponse", paramName: "params", defaultExpr: "null" },
-         "chunk": { paramsType: "kotlinx.serialization.json.JsonObject?", returnType: "RpcChunkResponse", paramName: "params", defaultExpr: "null" },
+         "block": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcBlockResponse", paramName: "request" },
+         "chunk": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcChunkResponse", paramName: "request" },
          "query": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcQueryResponse", paramName: "request" },
-         
+
          // Transaction Methods
          "send_tx": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "JsonElement", paramName: "transaction" },
-         "tx": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcTransactionResponse", paramName: "params" },
+         "tx": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcTransactionResponse", paramName: "request" },
          "EXPERIMENTAL_tx_status": { paramsType: "RpcTransactionStatusRequest", returnType: "RpcTransactionResponse", paramName: "request" },
-         
+
          // Protocol & Config
          "EXPERIMENTAL_protocol_config": { paramsType: "kotlinx.serialization.json.JsonObject?", returnType: "RpcProtocolConfigResponse", paramName: "params", defaultExpr: "null" },
          "client_config": { returnType: "RpcClientConfigResponse" },
-         
+
          // Light Client
          "next_light_client_block": { paramsType: "RpcLightClientNextBlockRequest", returnType: "RpcLightClientNextBlockResponse", paramName: "request" },
          "EXPERIMENTAL_light_client_proof": { paramsType: "RpcLightClientExecutionProofRequest", returnType: "RpcLightClientExecutionProofResponse", paramName: "request" },
-         
+
          // Receipt & Changes
          "EXPERIMENTAL_receipt": { paramsType: "RpcReceiptRequest", returnType: "RpcReceiptResponse", paramName: "request" },
-         "EXPERIMENTAL_changes_in_block": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcStateChangesInBlockResponse", paramName: "params" },
-         "EXPERIMENTAL_changes": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcStateChangesInBlockByTypeResponse", paramName: "params" },
-         
+         "EXPERIMENTAL_changes_in_block": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcStateChangesInBlockResponse", paramName: "request" },
+         "EXPERIMENTAL_changes": { paramsType: "kotlinx.serialization.json.JsonObject", returnType: "RpcStateChangesInBlockByTypeResponse", paramName: "request" },
+
          // Validators & Ordering
          "EXPERIMENTAL_validators_ordered": { paramsType: "RpcValidatorsOrderedRequest?", returnType: "JsonElement", paramName: "request", defaultExpr: "null" }
      };

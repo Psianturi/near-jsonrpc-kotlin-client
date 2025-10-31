@@ -170,9 +170,11 @@ dependencies {
 ### Version Notes:
 
 **Latest Versions:**
-- **1.1.3** - Latest stable (recommended)
-  - JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.1.3
+- **1.1.4** - Latest stable with parameter support and convenience methods
+  - JitPack: https://jitpack.io/#Psianturi/near-jsonrpc-kotlin-client/v1.1.4
   - GitHub Packages: Available for both modules
+  - **Fixed**: All client methods now accept proper input parameters
+  - **Added**: Convenience methods for common operations (block(), gasPrice(), queryAccount(), etc.)
 - **1.1.0** - Previous stable
 - **1.0.0** - Initial release
 
@@ -202,7 +204,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -219,36 +221,132 @@ fun main() = runBlocking {
     // Create NEAR RPC client
     val client = NearRpcClient(transport)
 
-    // Query network status
+    // Query network status (no parameters needed)
     val status = client.status() // Returns JsonElement
     println("NEAR Status: $status")
     
-    // Query validators
-    val validators = client.validators() // Returns JsonElement
-    println("Validators: $validators")
+    // Query block with parameters
+    val blockRequest = buildJsonObject {
+        put("finality", JsonPrimitive("final"))
+    }
+    val block = client.block(blockRequest) // Returns RpcBlockResponse
+    println("Block: $block")
+
+    // Query block with convenience methods
+    val finalBlock = client.block() // Get final block
+    val specificBlock = client.block("block-hash-or-height") // Get specific block
+
+    // Query gas price (optional parameter)
+    val gasPrice = client.gasPrice(null) // null for latest block
+    val latestGasPrice = client.gasPrice() // Convenience method for latest
+    println("Gas Price: $gasPrice")
+
+    // Query account with typed request
+    val queryRequest = buildJsonObject {
+        put("request_type", JsonPrimitive("view_account"))
+        put("finality", JsonPrimitive("final"))
+        put("account_id", JsonPrimitive("example.testnet"))
+    }
+    val account = client.query(queryRequest) // Returns RpcQueryResponse
+    println("Account: $account")
+
+    // Query account with convenience methods
+    val accountInfo = client.queryAccount("example.testnet") // Get account details
+    val contractCode = client.queryCode("contract.testnet") // Get contract code
 
     // Clean up
     http.close()
 }
 ```
 
-Typed decode via transport generics (advanced):
+Advanced usage with typed parameters:
 ```kotlin
-// You can use the transport directly with a typed result R when you know the schema:
-data class StatusLike(val chainId: String?)
-// val result: StatusLike = transport.call<JsonObject, StatusLike>("status", buildJsonObject {})
+// Using specific request types for better type safety
+import com.near.jsonrpc.types.*
+
+// Transaction status with typed request
+val txStatusRequest = RpcTransactionStatusRequest(
+    txHash = "your-transaction-hash",
+    senderAccountId = "sender.testnet"
+)
+val txStatus = client.EXPERIMENTALTxStatus(txStatusRequest)
+
+// Light client proof with typed request
+val proofRequest = RpcLightClientExecutionProofRequest(
+    id = JsonPrimitive("your-outcome-id"),
+    lightClientHead = JsonPrimitive("your-light-client-head")
+)
+val proof = client.EXPERIMENTALLightClientProof(proofRequest)
+
+// Direct transport usage for custom types
+data class CustomResponse(val customField: String)
+val customResult: CustomResponse = transport.call(
+    "custom_method", 
+    buildJsonObject { put("param", JsonPrimitive("value")) }
+)
 ```
 
-**Typed Endpoints (19 methods):**
-- **Status & Network**: status, validators, network_info, health
-- **Query & Block**: gas_price, block, chunk, query
-- **Transactions**: send_tx, tx, EXPERIMENTAL_tx_status
-- **Protocol & Config**: EXPERIMENTAL_protocol_config, client_config
-- **Light Client**: next_light_client_block, EXPERIMENTAL_light_client_proof
-- **Receipt & Changes**: EXPERIMENTAL_receipt, EXPERIMENTAL_changes_in_block, EXPERIMENTAL_changes
-- **Validators**: EXPERIMENTAL_validators_ordered
+**Method Categories & Parameter Requirements:**
 
-Other endpoints return `JsonElement` and can be manually decoded to generated types. Additional typed wrappers are added incrementally.
+**✅ No Parameters Required:**
+```kotlin
+client.status()           // Network status
+client.health()           // Node health
+client.validators()       // Current validators
+client.networkInfo()      // Network connections
+client.clientConfig()     // Client configuration
+```
+
+**📝 Optional Parameters:**
+```kotlin
+client.gasPrice(null)                    // Latest gas price
+client.EXPERIMENTALProtocolConfig(null)  // Current protocol config
+client.EXPERIMENTALValidatorsOrdered(null) // Current epoch validators
+```
+
+**🔧 Required Parameters:**
+```kotlin
+// Block queries
+val blockRequest = buildJsonObject {
+    put("finality", JsonPrimitive("final"))  // or "optimistic"
+    // OR put("block_id", JsonPrimitive("block-hash-or-height"))
+}
+client.block(blockRequest)
+
+// Block queries with convenience methods
+val finalBlock = client.block() // Get final block
+val specificBlock = client.block("block-hash-or-height") // Get specific block
+
+// Account/Contract queries
+val queryRequest = buildJsonObject {
+    put("request_type", JsonPrimitive("view_account"))
+    put("finality", JsonPrimitive("final"))
+    put("account_id", JsonPrimitive("example.testnet"))
+}
+client.query(queryRequest)
+
+// Account/Contract queries with convenience methods
+val accountInfo = client.queryAccount("example.testnet") // Get account details
+val contractCode = client.queryCode("contract.testnet") // Get contract code
+
+// Transaction status
+val txRequest = RpcTransactionStatusRequest(
+    txHash = "transaction-hash",
+    senderAccountId = "sender.testnet"
+)
+client.EXPERIMENTALTxStatus(txRequest)
+
+// Protocol config with convenience method
+val protocolConfig = client.EXPERIMENTALProtocolConfig() // Get current protocol config
+
+// Validators with convenience method
+val validators = client.EXPERIMENTALValidatorsOrdered() // Get current epoch validators
+```
+
+**Return Types:**
+- **Strongly Typed**: `RpcBlockResponse`, `RpcQueryResponse`, `RpcTransactionResponse`, etc.
+- **Generic**: `JsonElement` for endpoints without specific response types
+- **Type Safety**: All parameters use proper Kotlin types or `JsonObject`
 
 --------------------------------------------------------------------------------
 
