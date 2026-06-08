@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "NEAR Protocol JSON RPC API",
-    "version": "1.2.2"
+    "version": "1.2.9"
   },
   "paths": {
     "/EXPERIMENTAL_call_function": {
@@ -278,6 +278,34 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/JsonRpcResponse_for_RpcReceiptResponse_and_RpcReceiptError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/EXPERIMENTAL_receipt_to_tx": {
+      "post": {
+        "description": "Resolves a receipt ID back to the originating transaction hash and sender account",
+        "operationId": "EXPERIMENTAL_receipt_to_tx",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonRpcRequest_for_EXPERIMENTAL_receipt_to_tx"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonRpcResponse_for_RpcReceiptToTxResponse_and_RpcReceiptToTxError"
                 }
               }
             }
@@ -1104,13 +1132,13 @@
         "type": "object"
       },
       "AccessKeyInfoView": {
-        "description": "Describes information about an access key including the public key.",
+        "description": "Describes information about an access key including its on-trie\nidentifier. For ed25519/secp256k1 access keys the `public_key` field\nis the full public key (string form unchanged from before); for\nML-DSA-65 access keys it is a `ml-dsa-65-hash:...` SHA3-256 digest\n(the full pubkey is not stored on-chain).",
         "properties": {
           "access_key": {
             "$ref": "#/components/schemas/AccessKeyView"
           },
           "public_key": {
-            "$ref": "#/components/schemas/PublicKey"
+            "$ref": "#/components/schemas/PublicKeyHandle"
           }
         },
         "required": [
@@ -3025,6 +3053,35 @@
               "GasKeyFunctionCallAllowanceNotAllowed"
             ],
             "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "description": "The combined number of `DeployContract` and `DeployGlobalContract`\nactions in one receipt exceeded the limit.",
+            "properties": {
+              "TotalNumberOfDeployActionsExceeded": {
+                "properties": {
+                  "limit": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "number_of_deploy_actions": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "number_of_deploy_actions",
+                  "limit"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "TotalNumberOfDeployActionsExceeded"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -3343,6 +3400,19 @@
             "minimum": 0,
             "nullable": true,
             "type": "integer"
+          },
+          "prev_last_certified_block_epoch_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EpochId"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ]
           },
           "prev_state_root": {
             "$ref": "#/components/schemas/CryptoHash"
@@ -3671,6 +3741,20 @@
           "prev_state_root": {
             "$ref": "#/components/schemas/CryptoHash"
           },
+          "proposed_split": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrieSplit"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "description": "Proposed trie split for dynamic resharding\n`None`: field missing (`ShardChunkHeaderInnerV4` or earlier)\n`Some(None)`: field present, but not set (`ChunkHeaderInnerV5` or later)\n`Some(Some(split))`: field present and set"
+          },
           "rent_paid": {
             "allOf": [
               {
@@ -3744,6 +3828,13 @@
               "secs": 1
             },
             "description": "Interval at which the system checks for new blocks or chunks to archive."
+          },
+          "snapshot_every_n_epochs": {
+            "default": 10,
+            "description": "Cadence of state snapshots, in epochs. Higher values reduce bucket cost at\nthe expense of potentially longer delta replay during reader bootstrap.",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
           }
         },
         "type": "object"
@@ -4403,8 +4494,8 @@
       "EpochSyncConfig": {
         "properties": {
           "epoch_sync_horizon_num_epochs": {
-            "default": 4,
-            "description": "Number of epochs behind the network head beyond which the node will use\nepoch sync instead of header sync. Also the maximum age (in epochs) of\naccepted epoch sync proofs. At the consumption site, this is multiplied\nby epoch_length to get the horizon in blocks.",
+            "default": 2,
+            "description": "Number of epochs behind the network head beyond which the node will use\nepoch sync instead of header sync. At the consumption site, this is\nmultiplied by epoch_length to get the horizon in blocks.",
             "format": "uint64",
             "minimum": 0,
             "type": "integer"
@@ -5140,6 +5231,64 @@
             "properties": {
               "cause": {
                 "$ref": "#/components/schemas/RpcReceiptError"
+              },
+              "name": {
+                "enum": [
+                  "HANDLER_ERROR"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "cause"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "cause": {
+                "$ref": "#/components/schemas/InternalError"
+              },
+              "name": {
+                "enum": [
+                  "INTERNAL_ERROR"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "cause"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "ErrorWrapper_for_RpcReceiptToTxError": {
+        "oneOf": [
+          {
+            "properties": {
+              "cause": {
+                "$ref": "#/components/schemas/RpcRequestValidationErrorKind"
+              },
+              "name": {
+                "enum": [
+                  "REQUEST_VALIDATION_ERROR"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "cause"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "cause": {
+                "$ref": "#/components/schemas/RpcReceiptToTxError"
               },
               "name": {
                 "enum": [
@@ -6127,6 +6276,22 @@
             ],
             "description": "Cost for logging per byte"
           },
+          "p256_verify_base": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NearGas"
+              }
+            ],
+            "description": "Cost of P-256 ECDSA signature verification base"
+          },
+          "p256_verify_byte": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NearGas"
+              }
+            ],
+            "description": "Cost of P-256 ECDSA signature verification per byte"
+          },
           "promise_and_base": {
             "allOf": [
               {
@@ -6502,6 +6667,14 @@
               }
             ],
             "description": "Per byte cost of arguments and method name."
+          },
+          "yield_create_with_id_base": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NearGas"
+              }
+            ],
+            "description": "Base cost for creating a yield promise with a user-provided yield ID\n(covers the additional trie writes for the yield_id<->data_id mapping)."
           },
           "yield_resume_base": {
             "allOf": [
@@ -7030,17 +7203,25 @@
         ],
         "type": "object"
       },
-      "GenesisConfig": {
+      "GasKeyNoncesView": {
+        "description": "Gas key nonces view returned by the `view_gas_key_nonces` RPC query.",
         "properties": {
-          "avg_hidden_validator_seats_per_shard": {
-            "description": "Expected number of hidden validators per shard.",
+          "nonces": {
             "items": {
               "format": "uint64",
               "minimum": 0,
               "type": "integer"
             },
             "type": "array"
-          },
+          }
+        },
+        "required": [
+          "nonces"
+        ],
+        "type": "object"
+      },
+      "GenesisConfig": {
+        "properties": {
           "block_producer_kickout_threshold": {
             "description": "Threshold for kicking out block producers, between 0 and 100.",
             "format": "uint8",
@@ -7184,24 +7365,8 @@
             "minimum": 0,
             "type": "integer"
           },
-          "num_block_producer_seats_per_shard": {
-            "description": "Defines number of shards and number of block producer seats per each shard at genesis.\nNote: not used with protocol_feature_chunk_only_producers -- replaced by minimum_validators_per_shard\nNote: not used before as all block producers produce chunks for all shards",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "type": "array"
-          },
           "num_blocks_per_year": {
             "description": "Expected number of blocks per year",
-            "format": "uint64",
-            "minimum": 0,
-            "type": "integer"
-          },
-          "num_chunk_only_producer_seats": {
-            "default": 300,
-            "description": "Deprecated.",
             "format": "uint64",
             "minimum": 0,
             "type": "integer"
@@ -7353,8 +7518,6 @@
           "chain_id",
           "genesis_height",
           "num_block_producer_seats",
-          "num_block_producer_seats_per_shard",
-          "avg_hidden_validator_seats_per_shard",
           "dynamic_resharding",
           "epoch_length",
           "gas_limit",
@@ -7410,24 +7573,24 @@
           {
             "additionalProperties": false,
             "properties": {
-              "CodeHash": {
+              "hash": {
                 "$ref": "#/components/schemas/CryptoHash"
               }
             },
             "required": [
-              "CodeHash"
+              "hash"
             ],
             "type": "object"
           },
           {
             "additionalProperties": false,
             "properties": {
-              "AccountId": {
+              "account_id": {
                 "$ref": "#/components/schemas/AccountId"
               }
             },
             "required": [
-              "AccountId"
+              "account_id"
             ],
             "type": "object"
           }
@@ -8041,6 +8204,27 @@
             },
             "required": [
               "Ed25519VerifyInvalidInput"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "description": "Input length mismatch for p256 signature verification (signature is not 64\nbytes or public key is not 33 bytes). Parse failures of otherwise\nwell-sized inputs return 0 from the host function instead of aborting.",
+            "properties": {
+              "P256VerifyInvalidInput": {
+                "properties": {
+                  "msg": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "msg"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "P256VerifyInvalidInput"
             ],
             "type": "object"
           }
@@ -8914,6 +9098,33 @@
           "method"
         ],
         "title": "JsonRpcRequest_for_EXPERIMENTAL_receipt",
+        "type": "object"
+      },
+      "JsonRpcRequest_for_EXPERIMENTAL_receipt_to_tx": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "jsonrpc": {
+            "type": "string"
+          },
+          "method": {
+            "enum": [
+              "EXPERIMENTAL_receipt_to_tx"
+            ],
+            "type": "string"
+          },
+          "params": {
+            "$ref": "#/components/schemas/RpcReceiptToTxRequest"
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id",
+          "params",
+          "method"
+        ],
+        "title": "JsonRpcRequest_for_EXPERIMENTAL_receipt_to_tx",
         "type": "object"
       },
       "JsonRpcRequest_for_EXPERIMENTAL_split_storage_info": {
@@ -10381,6 +10592,46 @@
         "title": "JsonRpcResponse_for_RpcReceiptResponse_and_RpcReceiptError",
         "type": "object"
       },
+      "JsonRpcResponse_for_RpcReceiptToTxResponse_and_RpcReceiptToTxError": {
+        "oneOf": [
+          {
+            "properties": {
+              "result": {
+                "$ref": "#/components/schemas/RpcReceiptToTxResponse"
+              }
+            },
+            "required": [
+              "result"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "error": {
+                "$ref": "#/components/schemas/ErrorWrapper_for_RpcReceiptToTxError"
+              }
+            },
+            "required": [
+              "error"
+            ],
+            "type": "object"
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "jsonrpc": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id"
+        ],
+        "title": "JsonRpcResponse_for_RpcReceiptToTxResponse_and_RpcReceiptToTxError",
+        "type": "object"
+      },
       "JsonRpcResponse_for_RpcSplitStorageInfoResponse_and_RpcSplitStorageInfoError": {
         "oneOf": [
           {
@@ -10893,8 +11144,28 @@
             "minimum": 0,
             "type": "integer"
           },
+          "max_blocks_per_contract": {
+            "description": "If present, stores max total number of basic blocks across all functions in a contract.\nThis caps total compilation time for a contract.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_blocks_per_function": {
+            "description": "If present, stores max number of basic blocks (block/loop/if) in a single function.\nThis caps per-function compilation time in Cranelift.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
           "max_contract_size": {
             "description": "Max contract size",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "max_deploy_actions_per_receipt": {
+            "description": "Max number of `DeployContract` and `DeployGlobalContract` actions\ncombined within a single receipt.",
             "format": "uint64",
             "minimum": 0,
             "type": "integer"
@@ -10902,6 +11173,13 @@
           "max_elements_per_contract_table": {
             "description": "If present, stores max number of elements in a single contract's table",
             "format": "uint",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_function_body_size": {
+            "description": "If present, stores max byte size of a single function body in a contract",
+            "format": "uint64",
             "minimum": 0,
             "nullable": true,
             "type": "integer"
@@ -10920,6 +11198,13 @@
               }
             ],
             "description": "Max amount of gas that can be used, excluding gas attached to promises."
+          },
+          "max_instrumented_code_size": {
+            "description": "If present, stores max byte size of the wasm code after gas instrumentation.\nThis prevents Cranelift's 24-bit SSA counter from overflowing on\npathologically large contracts.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
           },
           "max_length_method_name": {
             "description": "Max length of any method name (without terminating character).",
@@ -10982,6 +11267,25 @@
             "minimum": 0,
             "type": "integer"
           },
+          "max_operand_stack_bytes_per_function": {
+            "description": "If present, stores the max operand stack size (in bytes) at any point\nduring the execution of a single function. Per-function: not summed\nacross recursion. Computed by `finite_wasm::max_stack`.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_params_per_contract": {
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "max_params_per_function": {
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
           "max_promises_per_function_call_action": {
             "description": "Max number of promises that a function call can create",
             "format": "uint64",
@@ -11031,6 +11335,13 @@
             "description": "Max transaction size",
             "format": "uint64",
             "minimum": 0,
+            "type": "integer"
+          },
+          "max_types_per_contract": {
+            "description": "If present, stores max number of entries in the wasm type section that\na contract may declare.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
             "type": "integer"
           },
           "max_yield_payload_size": {
@@ -11392,6 +11703,25 @@
           }
         ]
       },
+      "NonceMode": {
+        "description": "Controls how the transaction nonce is validated against the access key nonce.",
+        "oneOf": [
+          {
+            "description": "Any nonce strictly greater than the current access key nonce (default behavior).",
+            "enum": [
+              "monotonic"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "Nonce must be exactly `ak_nonce + 1` (sequential ordering).",
+            "enum": [
+              "strict"
+            ],
+            "type": "string"
+          }
+        ]
+      },
       "PeerId": {
         "allOf": [
           {
@@ -11582,6 +11912,62 @@
               "TooManyTableElements"
             ],
             "type": "string"
+          },
+          {
+            "description": "A function body in the contract exceeds the size limit.",
+            "enum": [
+              "FunctionBodyTooLarge"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "The instrumented code exceeds the size limit.",
+            "enum": [
+              "InstrumentedCodeTooLarge"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "A function contains too many basic blocks.",
+            "enum": [
+              "TooManyBlocksPerFunction"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "A contract contains too many basic blocks.",
+            "enum": [
+              "TooManyBlocksPerContract"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "Contract declares too many entries in the wasm type section.",
+            "enum": [
+              "TooManyTypes"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "All contract functions combined have more than `max_params_per_contract` parameters.",
+            "enum": [
+              "TooManyParamsPerFunction"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "A function has more than `max_params_per_function` parameters.",
+            "enum": [
+              "TooManyParamsPerContract"
+            ],
+            "type": "string"
+          },
+          {
+            "description": "A function's max operand-stack size (in bytes) exceeds\n`max_operand_stack_bytes_per_function`.",
+            "enum": [
+              "OperandStackTooLarge"
+            ],
+            "type": "string"
           }
         ]
       },
@@ -11594,6 +11980,9 @@
         "type": "string"
       },
       "PublicKey": {
+        "type": "string"
+      },
+      "PublicKeyHandle": {
         "type": "string"
       },
       "Range_of_uint64": {
@@ -12620,12 +13009,6 @@
             "description": "Not clear old data, set `true` for archive nodes.",
             "type": "boolean"
           },
-          "block_fetch_horizon": {
-            "description": "Horizon at which instead of fetching block, fetch full state.",
-            "format": "uint64",
-            "minimum": 0,
-            "type": "integer"
-          },
           "block_header_fetch_horizon": {
             "description": "Behind this horizon header fetch kicks in.",
             "format": "uint64",
@@ -12633,15 +13016,12 @@
             "type": "integer"
           },
           "block_production_tracking_delay": {
-            "description": "Duration to check for producing / skipping block.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Duration to check for producing / skipping block."
           },
           "catchup_step_period": {
             "description": "Time between check to perform catchup.",
@@ -12690,14 +13070,12 @@
             "type": "integer"
           },
           "chunk_wait_mult": {
-            "description": "Multiplier for the wait time for all chunks to be received.",
-            "items": {
-              "format": "int32",
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Multiplier for the wait time for all chunks to be received."
           },
           "chunks_cache_height_horizon": {
             "description": "Height horizon for the chunk cache. A chunk is removed from the cache\nif its height + chunks_cache_height_horizon < largest_seen_height.\nThe default value is DEFAULT_CHUNKS_CACHE_HEIGHT_HORIZON.",
@@ -12730,15 +13108,12 @@
             "type": "boolean"
           },
           "doomslug_step_period": {
-            "description": "Time between running doomslug timer.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Time between running doomslug timer."
           },
           "enable_early_prepare_transactions": {
             "description": "If true, transactions for the next chunk will be prepared early, right after the previous chunk's\npost-state is ready. This can help produce chunks faster, for high-throughput chains.\nThe current implementation increases latency on low-load chains, which will be fixed in the future.\nThe default is disabled.",
@@ -12840,26 +13215,20 @@
             "description": "Enable coloring of the logs"
           },
           "max_block_production_delay": {
-            "description": "Maximum wait for approvals before producing block.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Maximum wait for approvals before producing block."
           },
           "max_block_wait_delay": {
-            "description": "Maximum duration before skipping given height.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Maximum duration before skipping given height."
           },
           "max_gas_burnt_view": {
             "anyOf": [
@@ -12876,15 +13245,12 @@
             "description": "Max burnt gas per view method.  If present, overrides value stored in\ngenesis file.  The value only affects the RPCs without influencing the\nprotocol thus changing it per-node doesn’t affect the blockchain."
           },
           "min_block_production_delay": {
-            "description": "Minimum duration before producing block.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "maxItems": 2,
-            "minItems": 2,
-            "type": "array"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MutableConfigValue"
+              }
+            ],
+            "description": "Minimum duration before producing block."
           },
           "min_num_peers": {
             "description": "Minimum number of peers to start syncing.",
@@ -12926,6 +13292,24 @@
             ],
             "description": "Determines whether client should exit if the protocol version is not supported\nfor the next or next next epoch."
           },
+          "receipt_to_tx_max_hint_window": {
+            "description": "Max `±window` accepted on `EXPERIMENTAL_receipt_to_tx` requests.\nCaps caller's `window`. Applies to pre-first-scan `CenterOut`\nagainst caller's literal hint; ancestor scans use\n`receipt_to_tx_max_hop_distance` instead. Operators raising this\nshould also raise `receipt_to_tx_max_hop_distance` so backward reach\nmatches caller's wider hint scope. Requests with `window` over this\nrejected with `WindowTooLarge`.",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "receipt_to_tx_max_hop_distance": {
+            "description": "Max block-distance ancestor scan walks per hop once any scan in\nwalk refreshed `current_height`. Subsequent column-miss scans visit\n`h, h-1, ..., h-max_hop_distance` from most-recent scan-refreshed\nanchor, regardless of column hits between. Anchor included —\nsame-shard local receipts execute in same block as producing\noutcome. Raise if cold archival traffic shows ancestor misses —\ngap = scan-refreshed anchor to producer-outcome height of receipt\nwith missing column row (column hits don't reset anchor). Default\n20 (matches `receipt_to_tx_max_hint_window`).",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "receipt_to_tx_max_outcomes_per_request": {
+            "description": "Per-request ceiling on outcome rows the `EXPERIMENTAL_receipt_to_tx`\nhint-fallback scanner reads across hops + shards. Caps cold-RocksDB\nworst case on unauthenticated public endpoint. Default 20_000.\nOperators serving cold archival traffic with deep walks or sparse\noutcomes may raise; benchmark first (see TODO in\n`view_client_actor.rs`). Mid-scan exhaustion fails with\n`BudgetExceeded { scanned, limit }`.",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
           "resharding_config": {
             "$ref": "#/components/schemas/MutableConfigValue"
           },
@@ -12940,6 +13324,10 @@
           },
           "save_latest_witnesses": {
             "description": "Save observed instances of ChunkStateWitness to the database in DBCol::LatestChunkStateWitnesses.\nSaving the latest witnesses is useful for analysis and debugging.\nThis option can cause extra load on the database and is not recommended for production use.",
+            "type": "boolean"
+          },
+          "save_receipt_to_tx": {
+            "description": "Whether to persist receipt-to-tx origin mappings to disk or not.",
             "type": "boolean"
           },
           "save_state_changes": {
@@ -12992,10 +13380,6 @@
               }
             ],
             "description": "Options for syncing state."
-          },
-          "state_sync_enabled": {
-            "description": "Whether to use the State Sync mechanism.\nIf disabled, the node will do Block Sync instead of State Sync.",
-            "type": "boolean"
           },
           "state_sync_external_backoff": {
             "description": "Additional waiting period after a failed request to external storage",
@@ -13083,6 +13467,12 @@
             "format": "uint64",
             "minimum": 0,
             "nullable": true,
+            "type": "integer"
+          },
+          "transaction_pool_strict_nonce_ttl_blocks": {
+            "description": "TTL in blocks for gapped strict-nonce transactions in the pool. Transactions with a\nnonce gap whose block_hash is older than this many blocks are evicted during\nprepare_transactions.",
+            "format": "uint64",
+            "minimum": 0,
             "type": "integer"
           },
           "transaction_request_handler_threads": {
@@ -13944,15 +14334,6 @@
       },
       "RpcProtocolConfigResponse": {
         "properties": {
-          "avg_hidden_validator_seats_per_shard": {
-            "description": "Expected number of hidden validators per shard.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "type": "array"
-          },
           "block_producer_kickout_threshold": {
             "description": "Threshold for kicking out block producers, between 0 and 100.",
             "format": "uint8",
@@ -14085,15 +14466,6 @@
             "format": "uint64",
             "minimum": 0,
             "type": "integer"
-          },
-          "num_block_producer_seats_per_shard": {
-            "description": "Defines number of shards and number of block producer seats per each shard at genesis.",
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "type": "array"
           },
           "num_blocks_per_year": {
             "description": "Expected number of blocks per year",
@@ -14698,8 +15070,27 @@
                   "account_id": {
                     "$ref": "#/components/schemas/AccountId"
                   },
+                  "after_key_base64": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/StoreKey"
+                      },
+                      {
+                        "enum": [
+                          null
+                        ],
+                        "nullable": true
+                      }
+                    ]
+                  },
                   "include_proof": {
                     "type": "boolean"
+                  },
+                  "limit": {
+                    "format": "uint32",
+                    "minimum": 1,
+                    "nullable": true,
+                    "type": "integer"
                   },
                   "prefix_base64": {
                     "$ref": "#/components/schemas/StoreKey"
@@ -15027,8 +15418,27 @@
                   "account_id": {
                     "$ref": "#/components/schemas/AccountId"
                   },
+                  "after_key_base64": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/StoreKey"
+                      },
+                      {
+                        "enum": [
+                          null
+                        ],
+                        "nullable": true
+                      }
+                    ]
+                  },
                   "include_proof": {
                     "type": "boolean"
+                  },
+                  "limit": {
+                    "format": "uint32",
+                    "minimum": 1,
+                    "nullable": true,
+                    "type": "integer"
                   },
                   "prefix_base64": {
                     "$ref": "#/components/schemas/StoreKey"
@@ -15356,8 +15766,27 @@
                   "account_id": {
                     "$ref": "#/components/schemas/AccountId"
                   },
+                  "after_key_base64": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/StoreKey"
+                      },
+                      {
+                        "enum": [
+                          null
+                        ],
+                        "nullable": true
+                      }
+                    ]
+                  },
                   "include_proof": {
                     "type": "boolean"
+                  },
+                  "limit": {
+                    "format": "uint32",
+                    "minimum": 1,
+                    "nullable": true,
+                    "type": "integer"
                   },
                   "prefix_base64": {
                     "$ref": "#/components/schemas/StoreKey"
@@ -15624,12 +16053,7 @@
             "$ref": "#/components/schemas/AccessKeyList"
           },
           {
-            "items": {
-              "format": "uint64",
-              "minimum": 0,
-              "type": "integer"
-            },
-            "type": "array"
+            "$ref": "#/components/schemas/GasKeyNoncesView"
           }
         ],
         "properties": {
@@ -15743,6 +16167,283 @@
           "receiver_id",
           "receipt_id",
           "receipt"
+        ],
+        "type": "object"
+      },
+      "RpcReceiptToTxError": {
+        "oneOf": [
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "receipt_id": {
+                    "$ref": "#/components/schemas/CryptoHash"
+                  }
+                },
+                "required": [
+                  "receipt_id"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "UNKNOWN_RECEIPT"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "limit": {
+                    "format": "uint32",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "receipt_id": {
+                    "$ref": "#/components/schemas/CryptoHash"
+                  }
+                },
+                "required": [
+                  "receipt_id",
+                  "limit"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "DEPTH_EXCEEDED"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "error_message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error_message"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "UNSUPPORTED"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "error_message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error_message"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "INTERNAL_ERROR"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "name": {
+                "enum": [
+                  "OUTCOMES_NOT_STORED"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "maximum": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "requested": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "requested",
+                  "maximum"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "WINDOW_TOO_LARGE"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "error_message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "error_message"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "MALFORMED_HINT"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "limit": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "scanned": {
+                    "format": "uint64",
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "scanned",
+                  "limit"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "BUDGET_EXCEEDED"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "RpcReceiptToTxRequest": {
+        "properties": {
+          "block_height": {
+            "description": "Block height near where receipt was created. Enables hint fallback\nscan on column miss. Anchor refreshes to each scan-resolved parent's\nexact execution height; later ancestors bounded via causality\n(emit before execute), so subsequent column-miss scans go\n`Ancestor`. Bump `receipt_to_tx_max_hop_distance` if cold archival\ngaps exceed default 20.\n\nCold-storage cost: per-row latency orders of magnitude over hot. To\nbound request cost:\n  - Supply `block_height` within parent's `±window` (default 5).\n  - Supply `shard_id`. Omit → all-shards enumeration until walker\n    crosses `FromReceipt` hop, multiplying cold-read cost.\n  - Don't widen `window` beyond indexer's accuracy; budget shared\n    across full ancestry walk.\n\nReceipt-id-only queries against periods with `save_receipt_to_tx`\ndisabled stay unsupported: column never written, no self-locating.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
+          "receipt_id": {
+            "$ref": "#/components/schemas/CryptoHash"
+          },
+          "shard_id": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShardId"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "description": "Shard hint. Narrows scan to this shard at hint height. Omit to\nenumerate all tracked shards (higher cost). After walker crosses a\nreceipt-origin hop, shard derived from parent's predecessor account\nand hint no longer applies. Best-effort across resharding: layout\nshifts can miss producer, walk returns `UnknownReceipt`."
+          },
+          "window": {
+            "description": "Pre-first-scan width: `±window` heights around hint. Caps at\n`receipt_to_tx_max_hint_window` (default 20). Ignored after first\nscan-resolved hop — walker switches to `Ancestor` mode at\n`receipt_to_tx_max_hop_distance` width.",
+            "format": "uint64",
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "receipt_id"
+        ],
+        "title": "RpcReceiptToTxRequest",
+        "type": "object"
+      },
+      "RpcReceiptToTxResponse": {
+        "properties": {
+          "sender_account_id": {
+            "$ref": "#/components/schemas/AccountId"
+          },
+          "transaction_hash": {
+            "$ref": "#/components/schemas/CryptoHash"
+          }
+        },
+        "required": [
+          "transaction_hash",
+          "sender_account_id"
         ],
         "type": "object"
       },
@@ -15934,6 +16635,32 @@
               "name": {
                 "enum": [
                   "INTERNAL_ERROR"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "info"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "info": {
+                "properties": {
+                  "shard_id": {
+                    "$ref": "#/components/schemas/ShardId"
+                  }
+                },
+                "required": [
+                  "shard_id"
+                ],
+                "type": "object"
+              },
+              "name": {
+                "enum": [
+                  "SHARD_NOT_APPLIED"
                 ],
                 "type": "string"
               }
@@ -17188,6 +17915,14 @@
               "$ref": "#/components/schemas/ValidatorKickoutView"
             },
             "type": "array"
+          },
+          "validator_reward_paid_prev_epoch": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/NearToken"
+            },
+            "default": {},
+            "description": "Per-validator rewards paid out at the start of the previous epoch.\nFor epoch E, this contains the rewards earned in epoch E-2 that were\nadded to validator and treasury balances at the first block of epoch\nE-1 (via `ValidatorAccountsUpdate`).",
+            "type": "object"
           }
         },
         "required": [
@@ -18349,9 +19084,30 @@
           "account_id": {
             "$ref": "#/components/schemas/AccountId"
           },
+          "after_key_base64": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreKey"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ],
+            "default": null
+          },
           "include_proof": {
             "default": false,
             "type": "boolean"
+          },
+          "limit": {
+            "default": null,
+            "format": "uint32",
+            "minimum": 1,
+            "nullable": true,
+            "type": "integer"
           },
           "prefix_base64": {
             "$ref": "#/components/schemas/StoreKey"
@@ -18374,6 +19130,19 @@
             "format": "uint64",
             "minimum": 0,
             "type": "integer"
+          },
+          "last_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreKey"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ]
           },
           "proof": {
             "items": {
@@ -18485,6 +19254,14 @@
               }
             ],
             "description": "Describes the cost of creating a data receipt, `DataReceipt`."
+          },
+          "ml_dsa_65_verification_cost": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NearGas"
+              }
+            ],
+            "description": "Describes the extra cost of verifying an ML-DSA-65 signature above the\ncost of verifying the standard signature types."
           },
           "pessimistic_gas_price_inflation_ratio": {
             "description": "Pessimistic gas price inflation ratio.",
@@ -18799,6 +19576,19 @@
             "minimum": 0,
             "nullable": true,
             "type": "integer"
+          },
+          "nonce_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NonceMode"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ]
           },
           "priority_fee": {
             "default": 0,
@@ -19245,7 +20035,7 @@
                     "$ref": "#/components/schemas/AccountId"
                   },
                   "public_key": {
-                    "$ref": "#/components/schemas/PublicKey"
+                    "$ref": "#/components/schemas/PublicKeyHandle"
                   }
                 },
                 "required": [
@@ -19276,7 +20066,7 @@
                     "$ref": "#/components/schemas/AccountId"
                   },
                   "public_key": {
-                    "$ref": "#/components/schemas/PublicKey"
+                    "$ref": "#/components/schemas/PublicKeyHandle"
                   }
                 },
                 "required": [
@@ -19317,7 +20107,7 @@
                     "type": "integer"
                   },
                   "public_key": {
-                    "$ref": "#/components/schemas/PublicKey"
+                    "$ref": "#/components/schemas/PublicKeyHandle"
                   }
                 },
                 "required": [
@@ -19897,6 +20687,37 @@
         ],
         "type": "object"
       },
+      "TrieSplit": {
+        "description": "The result of splitting a memtrie into two possibly even parts, according to `memory_usage`\nstored in the trie nodes.\n\n**NOTE: This is an artificial value calculated according to `TRIE_COST`. Hence, it does not\nrepresent actual memory allocation, but the split ratio should be roughly consistent with that.**",
+        "properties": {
+          "boundary_account": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountId"
+              }
+            ],
+            "description": "Account ID representing the split path"
+          },
+          "left_memory": {
+            "description": "Total `memory_usage` of the left part (excluding the split path)",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "right_memory": {
+            "description": "Total `memory_usage` of the right part (including the split path)",
+            "format": "uint64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "boundary_account",
+          "left_memory",
+          "right_memory"
+        ],
+        "type": "object"
+      },
       "TxExecutionError": {
         "description": "Error returned in the ExecutionOutcome in case of failure",
         "oneOf": [
@@ -19988,8 +20809,12 @@
       },
       "VMConfigView": {
         "properties": {
-          "deterministic_account_ids": {
-            "description": "See [VMConfig::deterministic_account_ids](crate::vm::Config::deterministic_account_ids).",
+          "bls12381_not_in_group_fix": {
+            "description": "See [VMConfig::bls12381_not_in_group_fix](crate::vm::Config::bls12381_not_in_group_fix).",
+            "type": "boolean"
+          },
+          "chain_id_host_fn": {
+            "description": "See [VMConfig::chain_id_host_fn](crate::vm::Config::chain_id_host_fn).",
             "type": "boolean"
           },
           "discard_custom_sections": {
@@ -19998,6 +20823,10 @@
           },
           "eth_implicit_accounts": {
             "description": "See [VMConfig::eth_implicit_accounts](crate::vm::Config::eth_implicit_accounts).",
+            "type": "boolean"
+          },
+          "eth_implicit_global_contract": {
+            "description": "See [VMConfig::eth_implicit_global_contract](crate::vm::Config::eth_implicit_global_contract).",
             "type": "boolean"
           },
           "ext_costs": {
@@ -20010,6 +20839,10 @@
           },
           "fix_contract_loading_cost": {
             "description": "See [VMConfig::fix_contract_loading_cost](crate::vm::Config::fix_contract_loading_cost).",
+            "type": "boolean"
+          },
+          "gas_key_host_fns": {
+            "description": "See [VMConfig::gas_key_host_fns](crate::vm::Config::gas_key_host_fns).",
             "type": "boolean"
           },
           "global_contract_host_fns": {
@@ -20046,6 +20879,14 @@
             "minimum": 0,
             "type": "integer"
           },
+          "one_yocto_on_promise": {
+            "description": "See [VMConfig::one_yocto_on_promise](crate::vm::Config::one_yocto_on_promise).",
+            "type": "boolean"
+          },
+          "p256_verify_host_fn": {
+            "description": "See [VMConfig::p256_verify_host_fn](crate::vm::Config::p256_verify_host_fn).",
+            "type": "boolean"
+          },
           "reftypes_bulk_memory": {
             "description": "See [VMConfig::reftypes_bulk_memory](crate::vm::Config::reftypes_bulk_memory).",
             "type": "boolean"
@@ -20071,6 +20912,10 @@
               }
             ],
             "description": "See [VMConfig::vm_kind](crate::vm::Config::vm_kind)."
+          },
+          "yield_with_id_host_fns": {
+            "description": "See [VMConfig::yield_with_id_host_fns](crate::vm::Config::yield_with_id_host_fns).",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -20369,6 +21214,19 @@
       "ViewStateResult": {
         "description": "Resulting state values for a view state query request",
         "properties": {
+          "last_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreKey"
+              },
+              {
+                "enum": [
+                  null
+                ],
+                "nullable": true
+              }
+            ]
+          },
           "proof": {
             "items": {
               "type": "string"
